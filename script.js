@@ -162,8 +162,12 @@ if (form) {
 
     await new Promise(r => setTimeout(r, 800));
 
-    // Open user's default email client pre-filled with the inquiry details
-    window.location.href = `mailto:juanventure@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Open user's default email client using a hidden anchor link to prevent page unload halt
+    const mailtoLink = document.createElement('a');
+    mailtoLink.href = `mailto:juanventure@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    document.body.appendChild(mailtoLink);
+    mailtoLink.click();
+    document.body.removeChild(mailtoLink);
 
     form.hidden = true;
     success.hidden = false;
