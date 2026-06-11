@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horizon Voyages | Luxury Cruise Specialists</title>
+  <meta name="description" content="Horizon Voyages is a boutique luxury cruise consultancy. We curate bespoke ocean journeys and handle every detail — so you arrive transformed, not just traveled." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ░░ NAV ░░ -->
+  <nav id="navbar" class="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo" id="logo-link">
+        <span class="logo-mark">⬡</span>
+        <span class="logo-text">Horizon <em>Voyages</em></span>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#destinations">Destinations</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#itineraries">Itineraries</a></li>
+        <li><a href="#about">About</a></li>
+      </ul>
+      <a href="#consult" class="btn btn-ghost nav-cta" id="nav-cta">Book a Consult</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ░░ HERO ░░ -->
+  <section class="hero" id="hero">
+    <div class="hero-media">
+      <img src="hero_cruise.png" alt="Luxury cruise ship at sunset" class="hero-img" id="hero-img" />
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Boutique Cruise Consultancy</p>
+      <h1 class="hero-headline">Your Journey<br /><em>Deserves a Specialist</em></h1>
+      <p class="hero-sub">We don't sell cruises. We design transformative ocean experiences — curated around you, handled with white-glove care from first call to final port.</p>
+      <div class="hero-actions">
+        <a href="#consult" class="btn btn-primary" id="hero-cta">Schedule Your Free Consultation</a>
+        <a href="#experience" class="btn btn-outline" id="hero-explore">Explore the Experience</a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-item"><span class="trust-num">500+</span><span class="trust-label">Voyages Curated</span></div>
+        <div class="trust-divider"></div>
+        <div class="trust-item"><span class="trust-num">4.9★</span><span class="trust-label">Client Rating</span></div>
+        <div class="trust-divider"></div>
+        <div class="trust-item"><span class="trust-num">12+</span><span class="trust-label">Cruise Lines</span></div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint" id="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ░░ PHILOSOPHY STRIP ░░ -->
+  <section class="philosophy" id="philosophy">
+    <div class="container">
+      <div class="philosophy-grid">
+        <div class="phil-card" data-reveal>
+          <div class="phil-icon">🧭</div>
+          <h3>Expert Curation</h3>
+          <p>We sift thousands of sailings to surface the itineraries that match your exact travel style, budget, and bucket list.</p>
+        </div>
+        <div class="phil-card" data-reveal>
+          <div class="phil-icon">🤝</div>
+          <h3>Personal Advocacy</h3>
+          <p>Your dedicated advisor acts as your insider at the cruise line — securing upgrades, amenities, and priority access others never see.</p>
+        </div>
+        <div class="phil-card" data-reveal>
+          <div class="phil-icon">🗓️</div>
+          <h3>Seamless Planning</h3>
+          <p>From air to hotel to shore excursions, every detail lives in one beautiful digital itinerary you can access anywhere, anytime.</p>
+        </div>
+        <div class="phil-card" data-reveal>
+          <div class="phil-icon">💎</div>
+          <h3>No Fee Advisory</h3>
+          <p>Our expertise costs you nothing. We're paid by the cruise lines, so you get a world-class advisor at zero extra cost.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ DESTINATIONS ░░ -->
+  <section class="destinations" id="destinations">
+    <div class="container">
+      <div class="section-header" data-reveal>
+        <p class="section-eyebrow">Where Will You Go</p>
+        <h2 class="section-title">Iconic Regions,<br /><em>Infinite Stories</em></h2>
+      </div>
+      <div class="dest-grid">
+        <div class="dest-card dest-large" id="dest-caribbean" data-reveal>
+          <img src="cruise_caribbean.png" alt="Caribbean cruise destination" loading="lazy" />
+          <div class="dest-card-overlay">
+            <div class="dest-info">
+              <p class="dest-region">Americas</p>
+              <h3>Caribbean &amp; Bahamas</h3>
+              <p class="dest-desc">Pristine beaches, turquoise waters, and vibrant island culture across the tropics' most storied islands.</p>
+              <a href="#consult" class="btn btn-ghost-sm">Plan This Voyage</a>
+            </div>
+          </div>
+        </div>
+        <div class="dest-card" id="dest-med" data-reveal>
+          <img src="cruise_mediterranean.png" alt="Mediterranean cruise" loading="lazy" />
+          <div class="dest-card-overlay">
+            <div class="dest-info">
+              <p class="dest-region">Europe</p>
+              <h3>Mediterranean</h3>
+              <p class="dest-desc">Ancient cities, volcanic islands, and timeless Riviera glamour across 15 breathtaking nations.</p>
+              <a href="#consult" class="btn btn-ghost-sm">Plan This Voyage</a>
+            </div>
+          </div>
+        </div>
+        <div class="dest-card" id="dest-alaska" data-reveal>
+          <img src="cruise_alaska.png" alt="Alaska cruise" loading="lazy" />
+          <div class="dest-card-overlay">
+            <div class="dest-info">
+              <p class="dest-region">North America</p>
+              <h3>Alaska &amp; Pacific Northwest</h3>
+              <p class="dest-desc">Glaciers, fjords, and untouched wilderness on one of the world's most awe-inspiring sailings.</p>
+              <a href="#consult" class="btn btn-ghost-sm">Plan This Voyage</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ EXPERIENCE (SUITE) ░░ -->
+  <section class="experience-section" id="experience">
+    <div class="experience-inner">
+      <div class="exp-image" data-reveal>
+        <img src="cruise_suite.png" alt="Luxury cruise suite with ocean view" loading="lazy" />
+        <div class="exp-badge">
+          <span class="badge-num">15</span>
+          <span class="badge-txt">Years of<br/>Expertise</span>
+        </div>
+      </div>
+      <div class="exp-content" data-reveal>
+        <p class="section-eyebrow">The Horizon Difference</p>
+        <h2 class="section-title">Luxury Isn't a Cabin Category.<br /><em>It's How You're Treated.</em></h2>
+        <p class="exp-body">Every client receives a dedicated advisor who knows the cruise industry inside and out. We handle the complexity so your voyage is nothing but joy — from the moment you reach out to the day you disembark.</p>
+        <ul class="exp-checklist">
+          <li><span class="check-icon">✦</span> Personalized voyage assessment call</li>
+          <li><span class="check-icon">✦</span> Beautiful digital itinerary (powered by Travefy)</li>
+          <li><span class="check-icon">✦</span> Exclusive amenity packages &amp; upgrades</li>
+          <li><span class="check-icon">✦</span> Air, hotel &amp; transfer coordination</li>
+          <li><span class="check-icon">✦</span> 24/7 support while you're at sea</li>
+        </ul>
+        <a href="#consult" class="btn btn-primary" id="exp-cta">Get Your Custom Plan</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ ITINERARY SHOWCASE ░░ -->
+  <section class="itineraries" id="itineraries">
+    <div class="container">
+      <div class="section-header" data-reveal>
+        <p class="section-eyebrow">Sample Voyages</p>
+        <h2 class="section-title">Curated Journeys,<br /><em>Crafted for You</em></h2>
+        <p class="section-sub">Every itinerary is a living document — updated, refined, and shared as a beautiful digital guide your whole travel party can access.</p>
+      </div>
+      <div class="itin-grid">
+        <article class="itin-card" data-reveal>
+          <div class="itin-header" style="background: linear-gradient(135deg,#0a3d62,#1a6091)">
+            <div class="itin-nights">7 Nights</div>
+            <h3>Eastern Caribbean Escape</h3>
+            <p>Miami → Nassau → St. Thomas → San Juan</p>
+          </div>
+          <div class="itin-body">
+            <div class="itin-detail"><span>⛵</span> Royal Caribbean — Oasis Class</div>
+            <div class="itin-detail"><span>📅</span> Nov 2026 – Apr 2027</div>
+            <div class="itin-detail"><span>🌟</span> Advisor-exclusive amenities included</div>
+            <div class="itin-tags">
+              <span class="tag">Beaches</span><span class="tag">Culture</span><span class="tag">Snorkeling</span>
+            </div>
+            <a href="#consult" class="btn btn-primary btn-full" id="itin-cta-1">Inquire About This Voyage</a>
+          </div>
+        </article>
+        <article class="itin-card featured-itin" data-reveal>
+          <div class="itin-badge-featured">Most Requested</div>
+          <div class="itin-header" style="background: linear-gradient(135deg,#1a0533,#5b2d8e)">
+            <div class="itin-nights">12 Nights</div>
+            <h3>Greek Isles &amp; Adriatic</h3>
+            <p>Rome → Santorini → Mykonos → Dubrovnik → Venice</p>
+          </div>
+          <div class="itin-body">
+            <div class="itin-detail"><span>⛵</span> Celebrity Cruises — Edge Class</div>
+            <div class="itin-detail"><span>📅</span> May – Oct 2026</div>
+            <div class="itin-detail"><span>🌟</span> Complimentary beverage &amp; dining package</div>
+            <div class="itin-tags">
+              <span class="tag">History</span><span class="tag">Romance</span><span class="tag">Fine Dining</span>
+            </div>
+            <a href="#consult" class="btn btn-primary btn-full" id="itin-cta-2">Inquire About This Voyage</a>
+          </div>
+        </article>
+        <article class="itin-card" data-reveal>
+          <div class="itin-header" style="background: linear-gradient(135deg,#0d3b2e,#1a7a55)">
+            <div class="itin-nights">10 Nights</div>
+            <h3>Alaska Glacier Discovery</h3>
+            <p>Seattle → Juneau → Skagway → Glacier Bay → Ketchikan</p>
+          </div>
+          <div class="itin-body">
+            <div class="itin-detail"><span>⛵</span> Holland America — Pinnacle Class</div>
+            <div class="itin-detail"><span>📅</span> Jun – Sep 2026</div>
+            <div class="itin-detail"><span>🌟</span> Priority shore excursion booking</div>
+            <div class="itin-tags">
+              <span class="tag">Wildlife</span><span class="tag">Adventure</span><span class="tag">Glaciers</span>
+            </div>
+            <a href="#consult" class="btn btn-primary btn-full" id="itin-cta-3">Inquire About This Voyage</a>
+          </div>
+        </article>
+      </div>
+      <div class="itin-travefy-note" data-reveal>
+        <div class="travefy-icon">🗺️</div>
+        <p>All booked voyages come with a <strong>stunning digital itinerary</strong> powered by <strong>Travefy</strong> — shareable with your travel party, updated in real-time, and accessible on any device.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ TESTIMONIALS ░░ -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div class="section-header" data-reveal>
+        <p class="section-eyebrow">Client Stories</p>
+        <h2 class="section-title">Words from<br /><em>Our Voyagers</em></h2>
+      </div>
+      <div class="testi-track-wrap">
+        <div class="testi-track" id="testi-track">
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"Our Mediterranean cruise was flawless. Every detail was handled — from the business class flights to the private shore tours. We've never felt so looked after."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">ML</div>
+              <div><strong>Margaret &amp; Larry Chen</strong><br /><span>Greek Isles Voyage, 2025</span></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"I was skeptical about using a travel advisor, but Horizon Voyages saved us thousands and got us a suite upgrade we never could have gotten on our own. Life-changing trip."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">DR</div>
+              <div><strong>David Reyes</strong><br /><span>Alaska Discovery, 2025</span></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"The digital itinerary they created was so beautiful my daughter thought I had hired a professional travel journalist. Every port, restaurant, and excursion perfectly documented."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">SB</div>
+              <div><strong>Sandra Bloom</strong><br /><span>Caribbean Escape, 2026</span></div>
+            </div>
+          </div>
+          <div class="testi-card">
+            <div class="testi-stars">★★★★★</div>
+            <p class="testi-quote">"Our advisor called the ship directly when our excursion got canceled and had a replacement arranged within the hour. That's the kind of service money simply can't buy elsewhere."</p>
+            <div class="testi-author">
+              <div class="testi-avatar">JK</div>
+              <div><strong>James &amp; Karen Walsh</strong><br /><span>Adriatic Voyage, 2025</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="testi-controls">
+          <button class="testi-btn" id="testi-prev" aria-label="Previous testimonial">‹</button>
+          <div class="testi-dots" id="testi-dots"></div>
+          <button class="testi-btn" id="testi-next" aria-label="Next testimonial">›</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ ADVISOR ░░ -->
+  <section class="advisor-section" id="about">
+    <div class="container">
+      <div class="advisor-inner">
+        <div class="advisor-img-wrap" data-reveal>
+          <img src="advisor_portrait.png" alt="Your dedicated cruise advisor" />
+          <div class="advisor-credentials">
+            <div class="cred-item"><strong>CLIA</strong><span>Certified</span></div>
+            <div class="cred-divider"></div>
+            <div class="cred-item"><strong>TOP 10%</strong><span>Outside Agents</span></div>
+          </div>
+        </div>
+        <div class="advisor-content" data-reveal>
+          <p class="section-eyebrow">Meet Your Advisor</p>
+          <h2 class="section-title">A Human Expert<br /><em>In Your Corner</em></h2>
+          <p class="advisor-body">Hi, I'm Elena Voss — a CLIA-certified cruise specialist with over 15 years sailing the same waters I send my clients to. I've personally sailed every major cruise line and dozens of itineraries so I can give you real, insider guidance — not just a brochure quote.</p>
+          <p class="advisor-body">I'm proudly affiliated with <strong>Outside Agents</strong>, one of North America's leading host agencies, which gives my clients access to exclusive rates, group amenities, and booking support that independent travelers simply can't access.</p>
+          <div class="advisor-actions">
+            <a href="#consult" class="btn btn-primary" id="advisor-cta">Book a Free Call with Elena</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ CONSULT / CALENDLY CTA ░░ -->
+  <section class="consult-section" id="consult">
+    <div class="consult-bg">
+      <div class="consult-glow consult-glow-1"></div>
+      <div class="consult-glow consult-glow-2"></div>
+    </div>
+    <div class="container">
+      <div class="consult-inner">
+        <div class="consult-copy" data-reveal>
+          <p class="section-eyebrow light">Ready to Set Sail?</p>
+          <h2 class="section-title light">Your Dream Voyage<br /><em>Starts with One Call</em></h2>
+          <p class="consult-body">Skip the overwhelm of searching hundreds of sailings. In a single 30-minute consultation, we'll map out your perfect voyage — destinations, ships, cabins, and all the extras that turn a good trip into an extraordinary one.</p>
+          <ul class="consult-bullets">
+            <li>✦ Completely free, no obligation</li>
+            <li>✦ 30-minute video or phone call</li>
+            <li>✦ Walk away with a personalized voyage plan</li>
+            <li>✦ Available Mon–Sat, 9am–7pm EST</li>
+          </ul>
+        </div>
+        <div class="consult-widget" data-reveal>
+          <div class="widget-card" id="consult-widget">
+            <div class="widget-header">
+              <div class="widget-logo">⬡ Horizon Voyages</div>
+              <h3>Book Your Free Consultation</h3>
+              <p>30 min · Video or Phone · No Obligation</p>
+            </div>
+            <!-- Inline booking form (Calendly embed placeholder) -->
+            <form class="consult-form" id="consult-form" novalidate>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fname">First Name</label>
+                  <input type="text" id="fname" name="fname" placeholder="Elena" required />
+                </div>
+                <div class="form-group">
+                  <label for="lname">Last Name</label>
+                  <input type="text" id="lname" name="lname" placeholder="Voss" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" />
+              </div>
+              <div class="form-group">
+                <label for="destination">Dream Destination</label>
+                <select id="destination" name="destination">
+                  <option value="">Select a region…</option>
+                  <option>Caribbean &amp; Bahamas</option>
+                  <option>Mediterranean</option>
+                  <option>Alaska &amp; Pacific Northwest</option>
+                  <option>Northern Europe &amp; Fjords</option>
+                  <option>Asia &amp; Southeast Asia</option>
+                  <option>South America &amp; Antarctica</option>
+                  <option>World Cruise</option>
+                  <option>Not sure yet — help me decide</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="budget">Approximate Budget (per person)</label>
+                <select id="budget" name="budget">
+                  <option value="">Select a range…</option>
+                  <option>Under $2,000</option>
+                  <option>$2,000 – $5,000</option>
+                  <option>$5,000 – $10,000</option>
+                  <option>$10,000 – $20,000</option>
+                  <option>$20,000+</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="message">Anything else you'd like us to know?</label>
+                <textarea id="message" name="message" rows="3" placeholder="Anniversary trip, traveling with grandkids, first cruise…"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full" id="form-submit">
+                <span class="btn-text">Request My Consultation →</span>
+                <span class="btn-loading" hidden>Sending…</span>
+              </button>
+              <p class="form-note">Prefer to self-schedule? <a href="#" id="calendly-link" class="inline-link">Open Calendly ↗</a></p>
+            </form>
+            <div class="form-success" id="form-success" hidden>
+              <div class="success-icon">✦</div>
+              <h3>You're on the list!</h3>
+              <p>Elena will reach out within one business day to confirm your consultation time. Check your inbox for a confirmation email.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <span class="logo-mark">⬡</span>
+            <span class="logo-text">Horizon <em>Voyages</em></span>
+          </a>
+          <p>Boutique luxury cruise consultancy, proudly affiliated with Outside Agents. CLIA Certified. IATAN Accredited.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="Instagram" class="social-btn" id="footer-ig">📷</a>
+            <a href="#" aria-label="Facebook" class="social-btn" id="footer-fb">📘</a>
+            <a href="#" aria-label="Pinterest" class="social-btn" id="footer-pt">📌</a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <h4>Destinations</h4>
+          <ul>
+            <li><a href="#consult">Caribbean</a></li>
+            <li><a href="#consult">Mediterranean</a></li>
+            <li><a href="#consult">Alaska</a></li>
+            <li><a href="#consult">Northern Europe</a></li>
+            <li><a href="#consult">World Cruises</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#about">About Elena</a></li>
+            <li><a href="#experience">Our Process</a></li>
+            <li><a href="#itineraries">Sample Voyages</a></li>
+            <li><a href="#consult">Book a Consult</a></li>
+            <li><a href="#">Press &amp; Media</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Cruise Line Reviews</a></li>
+            <li><a href="#">First-Time Cruiser Guide</a></li>
+            <li><a href="#">Packing Checklist</a></li>
+            <li><a href="#">Travel Insurance</a></li>
+            <li><a href="#">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Horizon Voyages. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        <p class="footer-host">Hosted through <strong>Outside Agents</strong> | FL Seller of Travel #ST12345</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ░░ AI CHAT WIDGET ░░ -->
+  <div class="chat-widget" id="chat-widget">
+    <button class="chat-widget-toggle" id="chat-toggle" aria-label="Toggle chat">
+      <span class="chat-icon">💬</span>
+    </button>
+    <div class="chat-window" id="chat-window" hidden>
+      <div class="chat-header">
+        <h3>Horizon AI Assistant</h3>
+        <button class="chat-close" id="chat-close" aria-label="Close chat">✕</button>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg ai-msg">
+          <div class="msg-content">Hello! I'm your AI concierge. How can I help you plan your dream voyage today?</div>
+        </div>
+      </div>
+      <form class="chat-input-area" id="chat-form">
+        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" />
+        <button type="submit" id="chat-submit" aria-label="Send message">➤</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="CruiseChatClient.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
