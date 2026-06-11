@@ -6,7 +6,7 @@ import json
 import os
 
 # Initialize Gemini Model
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
 
 # Tool-enabled LLM for the Inventory Agent
 inventory_llm = llm.bind_tools([search_gds_inventory])
