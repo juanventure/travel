@@ -3,19 +3,20 @@ from langchain_core.messages import HumanMessage
 import json
 from typing import AsyncGenerator
 
-async def simulate_agent_thought_process(message: str) -> AsyncGenerator[str, None]:
+async def simulate_agent_thought_process(session_id: str, message: str) -> AsyncGenerator[str, None]:
     """
     Invokes the LangGraph Multi-Agent architecture and yields SSE-formatted strings.
     """
-    initial_state = {
-        "messages": [HumanMessage(content=message)],
-        "current_intent": "",
-        "booking_context": {}
+    # Only pass the new message; the checkpointer will merge it with existing state
+    input_state = {
+        "messages": [HumanMessage(content=message)]
     }
+    
+    config = {"configurable": {"thread_id": session_id}}
     
     # We use astream_events to get granular updates
     # v2 API requires version="v2"
-    async for event in multi_agent_graph.astream_events(initial_state, version="v2"):
+    async for event in multi_agent_graph.astream_events(input_state, config=config, version="v2"):
         kind = event["event"]
         
         # When a node starts

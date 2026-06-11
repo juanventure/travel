@@ -22,7 +22,7 @@ async def cruise_chat(request: ChatRequest, api_key: str = Depends(get_api_key))
     Handles user queries and streams the AI agent's responses.
     """
     return StreamingResponse(
-        simulate_agent_thought_process(request.message),
+        simulate_agent_thought_process(request.session_id, request.message),
         media_type="text/event-stream"
     )
 

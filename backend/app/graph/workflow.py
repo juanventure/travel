@@ -48,5 +48,8 @@ builder.add_edge("tools", "inventory")
 builder.add_edge("consultation", END)
 builder.add_edge("booking", END)
 
+from langgraph.checkpoint.memory import MemorySaver
+
 # Compile Graph
-multi_agent_graph = builder.compile()
+memory = MemorySaver()
+multi_agent_graph = builder.compile(checkpointer=memory)
