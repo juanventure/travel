@@ -143,12 +143,27 @@ if (form) {
       return;
     }
 
-    // Simulate submission
+    // Gather form data and trigger email client
+    const formData = new FormData(form);
+    const fname = formData.get('fname');
+    const lname = formData.get('lname');
+    const email = formData.get('email');
+    const phone = formData.get('phone');
+    const destination = formData.get('destination');
+    const budget = formData.get('budget');
+    const message = formData.get('message');
+
+    const subject = `New Cruise Consultation Request: ${fname} ${lname}`;
+    const body = `Name: ${fname} ${lname}\nEmail: ${email}\nPhone: ${phone}\nDestination: ${destination}\nBudget: ${budget}\n\nMessage: ${message}`;
+
     btnText.hidden = true;
     btnLoad.hidden = false;
     submitBtn.disabled = true;
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 800));
+
+    // Open user's default email client pre-filled with the inquiry details
+    window.location.href = `mailto:juanventure@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     form.hidden = true;
     success.hidden = false;
