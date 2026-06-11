@@ -83,8 +83,9 @@ async def booking_node(state: AgentState):
                 }
                 messages_to_return.append(tool_msg)
                 
-                # Get final message from LLM acknowledging the tool success
-                final_response = await llm.ainvoke([sys_msg] + state["messages"] + messages_to_return)
+                # Hardcode final message to save Google Gemini API Quota
+                from langchain_core.messages import AIMessage
+                final_response = AIMessage(content="Perfect! I have successfully finalized your reservation details and notified our travel advisors. You will receive an email shortly with your secure payment link to confirm the booking. Bon voyage!")
                 messages_to_return.append(final_response)
                 
     return {"messages": messages_to_return}
