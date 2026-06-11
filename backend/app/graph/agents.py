@@ -18,8 +18,16 @@ def router_node(state: AgentState):
     If they just say hello or ask general advice, route to Consultation.
     If they say they want to book, route to Booking.
     """
-    messages = state["messages"]
+    messages = state.get("messages", [])
+    if not messages:
+        return {"current_intent": "Consultation"}
+        
     latest_msg = messages[-1].content.lower()
+    
+    # If the user is currently in the booking flow, keep them there so they can provide their name and email
+    if state.get("current_intent") == "Booking":
+        if "cancel" not in latest_msg and "stop" not in latest_msg and "nevermind" not in latest_msg:
+            return {"current_intent": "Booking"}
     
     if "book" in latest_msg or "reserve" in latest_msg or "pay" in latest_msg:
         next_intent = "Booking"
