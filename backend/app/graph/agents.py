@@ -63,7 +63,28 @@ async def tool_execution_node(state: AgentState):
     
     return {"messages": tool_messages}
 
+from app.graph.tools import search_gds_inventory, submit_booking_lead
+
 async def booking_node(state: AgentState):
-    sys_msg = SystemMessage(content="You are the secure Booking Agent. Ask the user for their full name and email to proceed with the reservation of their selected cruise. If you have that, tell them the booking is ready to be executed.")
-    response = await llm.ainvoke([sys_msg] + state["messages"])
-    return {"messages": [response]}
+    sys_msg = SystemMessage(content="You are the secure Booking Agent. Ask the user for their full name, email, and the cruise ID they want. Once you have all three, YOU MUST call the submit_booking_lead tool to finalize the reservation. Do not make up a confirmation number.")
+    booking_llm = llm.bind_tools([submit_booking_lead])
+    response = await booking_llm.ainvoke([sys_msg] + state["messages"])
+    
+    messages_to_return = [response]
+    if hasattr(response, "tool_calls") and response.tool_calls:
+        for tool_call in response.tool_calls:
+            if tool_call["name"] == "submit_booking_lead":
+                result = submit_booking_lead.invoke(tool_call["args"])
+                tool_msg = {
+                    "role": "tool", 
+                    "content": result, 
+                    "tool_call_id": tool_call["id"],
+                    "name": tool_call["name"]
+                }
+                messages_to_return.append(tool_msg)
+                
+                # Get final message from LLM acknowledging the tool success
+                final_response = await llm.ainvoke([sys_msg] + state["messages"] + messages_to_return)
+                messages_to_return.append(final_response)
+                
+    return {"messages": messages_to_return}

@@ -57,3 +57,13 @@ def search_gds_inventory(region: str = None, max_price: int = None) -> str:
         output += f"- [{v['id']}] {v['nights']} nights in {v['region']} on {v['cruise_line']} {v['ship']} for ${v['price_per_person']}pp (Date: {v['date']})\n"
         
     return output
+
+@tool
+def submit_booking_lead(full_name: str, email: str, cruise_id: str) -> str:
+    """
+    Submits a finalized booking lead to the travel agency CRM.
+    MUST be called when the user has provided their name, email, and selected a cruise.
+    """
+    # In reality, this would send an email or POST to a CRM API
+    print(f"*** NEW BOOKING LEAD: {full_name} ({email}) wants to book {cruise_id} ***")
+    return "SUCCESS: Lead submitted to the agency. The travel advisor will email them the secure payment link."
