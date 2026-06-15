@@ -19,6 +19,11 @@ services:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://user:password@db:5432/travel_db
       - REDIS_URL=redis://redis:6379/0
+      # Browser origins allowed by CORS (comma-separated). Set to your real domain in prod.
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost}
+      # Per-IP rate limits (requests/minute)
+      - CHAT_RATE_LIMIT_PER_MINUTE=${CHAT_RATE_LIMIT_PER_MINUTE:-20}
+      - BOOKING_RATE_LIMIT_PER_MINUTE=${BOOKING_RATE_LIMIT_PER_MINUTE:-10}
       - API_KEY=dev-secret-key-12345
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       # Booking-lead email (Gmail SMTP). Set SMTP_USER/SMTP_APP_PASSWORD in your .env.

@@ -84,6 +84,7 @@ async def tool_execution_node(state: AgentState):
 
 from app.graph.tools import search_gds_inventory, submit_booking_lead, get_cruise_details
 from app.notifications import send_booking_lead_email
+from app.db import save_booking_lead, mark_lead_emailed
 
 async def booking_node(state: AgentState):
     sys_msg = SystemMessage(content="You are the secure Booking Agent. Ask the user for their full name, email, and the cruise ID they want. Once you have all three, YOU MUST call the submit_booking_lead tool to finalize the reservation. Do not make up a confirmation number.")
@@ -103,15 +104,21 @@ async def booking_node(state: AgentState):
                 content=result, tool_call_id=tool_call["id"], name=tool_call["name"],
             ))
 
-            # 2. Notify the agency by email, OFF the event loop so the blocking
-            #    SMTP call doesn't stall this (or any other) request.
             full_name = args.get("full_name", "")
             email = args.get("email", "")
             cruise_id = args.get("cruise_id", "")
+            details = get_cruise_details(cruise_id)
+
+            # 2. Persist the lead BEFORE emailing, so it is never lost even if the
+            #    email fails. Soft-fails (returns None) if the DB is unavailable.
+            lead_id = await save_booking_lead(full_name, email, cruise_id, details)
+
+            # 3. Notify the agency by email, OFF the event loop so the blocking
+            #    SMTP call doesn't stall this (or any other) request.
             sent = await asyncio.to_thread(
-                send_booking_lead_email, full_name, email, cruise_id,
-                get_cruise_details(cruise_id),
+                send_booking_lead_email, full_name, email, cruise_id, details,
             )
+            await mark_lead_emailed(lead_id, sent)
 
             # 3. Confirm truthfully: only promise advisor follow-up if it was sent.
             #    Built without an LLM call to save Gemini API quota.
