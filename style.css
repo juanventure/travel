@@ -323,7 +323,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   border-color: var(--gold-dim);
   transform: translateY(-4px);
 }
-.phil-icon { font-size: 2rem; margin-bottom: 18px; }
+.phil-icon { color: var(--gold); margin-bottom: 18px; line-height: 0; }
+.phil-icon svg { width: 34px; height: 34px; }
 .phil-card h3 {
   font-family: var(--font-serif);
   font-size: 1.3rem;
@@ -527,7 +528,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   color: var(--muted);
   margin-bottom: 10px;
 }
-.itin-detail span:first-child { font-size: 1rem; }
+.itin-detail span:first-child { display: inline-flex; color: var(--gold); }
+.itin-detail span:first-child svg { width: 17px; height: 17px; }
 .itin-tags {
   display: flex;
   gap: 8px;
@@ -555,7 +557,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   margin: 0 auto;
   text-align: left;
 }
-.travefy-icon { font-size: 2rem; flex-shrink: 0; }
+.travefy-icon { color: var(--gold); flex-shrink: 0; line-height: 0; }
+.travefy-icon svg { width: 34px; height: 34px; }
 .itin-travefy-note p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
 .itin-travefy-note strong { color: var(--gold-light); }
 
@@ -824,7 +827,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   font-size: 1rem;
   transition: all var(--trans);
 }
-.social-btn:hover { border-color: var(--gold); background: rgba(200,169,110,.08); }
+.social-btn { color: var(--cream); }
+.social-btn svg { width: 18px; height: 18px; }
+.social-btn:hover { border-color: var(--gold); background: rgba(200,169,110,.08); color: var(--gold-light); }
 .footer-links h4 {
   font-size: .72rem;
   font-weight: 500;
@@ -931,7 +936,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(200,169,110,.5);
 }
-.chat-icon { font-size: 1.5rem; }
+.chat-icon { color: #0a1428; line-height: 0; }
+.chat-icon svg { width: 26px; height: 26px; }
 .chat-window {
   width: 350px;
   max-height: 500px;
