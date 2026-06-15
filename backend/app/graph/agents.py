@@ -1,7 +1,8 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from app.graph.state import AgentState
 from app.graph.tools import search_gds_inventory
+import asyncio
 import json
 import os
 
@@ -81,29 +82,54 @@ async def tool_execution_node(state: AgentState):
     
     return {"messages": tool_messages}
 
-from app.graph.tools import search_gds_inventory, submit_booking_lead
+from app.graph.tools import search_gds_inventory, submit_booking_lead, get_cruise_details
+from app.notifications import send_booking_lead_email
 
 async def booking_node(state: AgentState):
     sys_msg = SystemMessage(content="You are the secure Booking Agent. Ask the user for their full name, email, and the cruise ID they want. Once you have all three, YOU MUST call the submit_booking_lead tool to finalize the reservation. Do not make up a confirmation number.")
     booking_llm = llm.bind_tools([submit_booking_lead])
     response = await booking_llm.ainvoke([sys_msg] + state["messages"])
-    
+
     messages_to_return = [response]
     if hasattr(response, "tool_calls") and response.tool_calls:
         for tool_call in response.tool_calls:
-            if tool_call["name"] == "submit_booking_lead":
-                result = submit_booking_lead.invoke(tool_call["args"])
-                tool_msg = {
-                    "role": "tool", 
-                    "content": result, 
-                    "tool_call_id": tool_call["id"],
-                    "name": tool_call["name"]
-                }
-                messages_to_return.append(tool_msg)
-                
-                # Hardcode final message to save Google Gemini API Quota
-                from langchain_core.messages import AIMessage
-                final_response = AIMessage(content="Perfect! I have successfully finalized your reservation details and notified our travel advisors. You will receive an email shortly with your secure payment link to confirm the booking. Bon voyage!")
-                messages_to_return.append(final_response)
-                
+            if tool_call["name"] != "submit_booking_lead":
+                continue
+            args = tool_call["args"]
+
+            # 1. Record the lead (fast, synchronous).
+            result = submit_booking_lead.invoke(args)
+            messages_to_return.append(ToolMessage(
+                content=result, tool_call_id=tool_call["id"], name=tool_call["name"],
+            ))
+
+            # 2. Notify the agency by email, OFF the event loop so the blocking
+            #    SMTP call doesn't stall this (or any other) request.
+            full_name = args.get("full_name", "")
+            email = args.get("email", "")
+            cruise_id = args.get("cruise_id", "")
+            sent = await asyncio.to_thread(
+                send_booking_lead_email, full_name, email, cruise_id,
+                get_cruise_details(cruise_id),
+            )
+
+            # 3. Confirm truthfully: only promise advisor follow-up if it was sent.
+            #    Built without an LLM call to save Gemini API quota.
+            first_name = full_name.split()[0] if full_name.strip() else "there"
+            voyage = cruise_id or "your selected voyage"
+            if sent:
+                final_text = (
+                    f"Wonderful, {first_name}! I've sent your reservation details for "
+                    f"{voyage} to our travel advisors. They'll be in touch by email at "
+                    f"{email} shortly with your secure payment link to confirm. Bon voyage!"
+                )
+            else:
+                final_text = (
+                    f"Thank you, {first_name}! Your reservation request for {voyage} is "
+                    f"recorded. We hit a snag notifying our team automatically just now, "
+                    f"but your details are saved and an advisor will follow up at {email} "
+                    f"as soon as possible."
+                )
+            messages_to_return.append(AIMessage(content=final_text))
+
     return {"messages": messages_to_return}

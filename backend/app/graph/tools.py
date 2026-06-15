@@ -1,6 +1,5 @@
 from typing import Optional
 from langchain_core.tools import tool
-from app.notifications import send_booking_lead_email
 
 # Mock in-memory GDS database
 MOCK_GDS = [
@@ -60,25 +59,23 @@ def search_gds_inventory(region: Optional[str] = None, max_price: Optional[int] 
         
     return output
 
+def get_cruise_details(cruise_id: str) -> Optional[str]:
+    """Format a one-line summary of a cruise from the mock GDS, or None if unknown."""
+    cruise = next((v for v in MOCK_GDS if v["id"].lower() == cruise_id.lower()), None)
+    if not cruise:
+        return None
+    return (f"- [{cruise['id']}] {cruise['nights']} nights in {cruise['region']} "
+            f"on {cruise['cruise_line']} {cruise['ship']} for "
+            f"${cruise['price_per_person']}pp (Date: {cruise['date']})")
+
+
 @tool
 def submit_booking_lead(full_name: str, email: str, cruise_id: str) -> str:
     """
-    Submits a finalized booking lead to the travel agency CRM.
+    Records a finalized booking lead in the travel agency CRM.
     MUST be called when the user has provided their name, email, and selected a cruise.
     """
+    # Records the lead. The agency is notified by email in the booking node so the
+    # (blocking) send runs off the event loop and the confirmation can reflect it.
     print(f"*** NEW BOOKING LEAD: {full_name} ({email}) wants to book {cruise_id} ***")
-
-    # Look up the cruise so the agency email includes the voyage details.
-    cruise = next((v for v in MOCK_GDS if v["id"].lower() == cruise_id.lower()), None)
-    details = None
-    if cruise:
-        details = (f"- [{cruise['id']}] {cruise['nights']} nights in {cruise['region']} "
-                   f"on {cruise['cruise_line']} {cruise['ship']} for "
-                   f"${cruise['price_per_person']}pp (Date: {cruise['date']})")
-
-    sent = send_booking_lead_email(full_name, email, cruise_id, details)
-    if sent:
-        return ("SUCCESS: Lead emailed to the agency. The travel advisor will "
-                "email the customer the secure payment link.")
-    return ("SUCCESS: Lead recorded. NOTE: email notification is not configured, "
-            "so the agency was not actually emailed.")
+    return f"Booking lead for {full_name} ({email}) on {cruise_id} has been recorded."

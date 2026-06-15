@@ -82,9 +82,9 @@ the booking still succeeds.
 - **Auth/network error** → caught, logged as `Failed to send…`, booking succeeds.
 - A booking is **never** failed because of email problems (deliberate: the lead
   is still captured in logs, and UX shouldn't break on a notification issue).
-
-Trade-off: the user still sees the "advisors notified" confirmation even if the
-email silently failed. See roadmap §7 for closing this gap.
+- The chat confirmation is **truthful**: it only promises advisor email follow-up
+  when the send actually succeeded; otherwise it shows an honest "we'll follow up"
+  fallback (see roadmap items 1–2, now done).
 
 ---
 
@@ -113,10 +113,13 @@ Expected on success: `[notifications] Booking-lead email sent to juanventure@gma
 
 Ordered by value/effort:
 
-1. **Don't block the event loop.** `smtplib` is synchronous and runs inside an
-   async node; wrap in `asyncio.to_thread(...)` or push to a background task.
-2. **Truthful confirmation.** Only claim "advisors notified" when the send
-   actually returned True; otherwise show a softer message.
+1. ~~**Don't block the event loop.**~~ ✅ Done — the send runs via
+   `asyncio.to_thread(...)` in `booking_node`, so blocking SMTP no longer stalls
+   the request/event loop.
+2. ~~**Truthful confirmation.**~~ ✅ Done — `booking_node` builds the confirmation
+   from the actual send result: a positive advisor-follow-up message only when the
+   email sent, an honest fallback otherwise. Email sending moved out of the tool
+   (now record-only) into the node so the result can drive the message.
 3. **Persist the lead.** Write to the Postgres instance already in the compose
    stack (currently unused) so leads survive even if email fails — the email
    becomes a notification, the DB the source of truth.
