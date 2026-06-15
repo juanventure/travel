@@ -1,3 +1,4 @@
+from typing import Optional
 from langchain_core.tools import tool
 
 # Mock in-memory GDS database
@@ -32,7 +33,7 @@ MOCK_GDS = [
 ]
 
 @tool
-def search_gds_inventory(region: str = None, max_price: int = None) -> str:
+def search_gds_inventory(region: Optional[str] = None, max_price: Optional[int] = None) -> str:
     """
     Searches the Global Distribution System (GDS) for available cruise voyages.
     Args:

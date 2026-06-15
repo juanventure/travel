@@ -11,7 +11,9 @@ app = FastAPI(title="Headless AI Cruise Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # In production, restrict to actual frontend domain
-    allow_credentials=True,
+    # Auth is via the X-API-Key header, not cookies, so credentials are not needed.
+    # A wildcard origin with allow_credentials=True is rejected by browsers, so keep this False.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

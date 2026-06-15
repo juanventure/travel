@@ -1,12 +1,12 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from app.graph.state import AgentState
 from app.graph.tools import search_gds_inventory
 import json
 import os
 
 # Initialize Gemini Model
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 
 # Tool-enabled LLM for the Inventory Agent
 inventory_llm = llm.bind_tools([search_gds_inventory])
@@ -44,7 +44,14 @@ async def consultation_node(state: AgentState):
     return {"messages": [response]}
 
 async def inventory_node(state: AgentState):
-    sys_msg = SystemMessage(content="You are the Inventory Agent. You search the GDS database using the search_gds_inventory tool to find available cruises. Always use the tool if the user asks for options.")
+    sys_msg = SystemMessage(content=(
+        "You are the Inventory Agent for Horizon Voyages. Use the search_gds_inventory "
+        "tool to find available cruises whenever the user asks for options. "
+        "After the tool returns results, you MUST reply to the user in natural language "
+        "with a warm, concise summary of the matching sailings — include the voyage ID, "
+        "ship, number of nights, price per person, and sail date for each. "
+        "If there are no matches, say so politely and invite them to adjust their criteria."
+    ))
     
     # We invoke the tool-bound LLM
     response = await inventory_llm.ainvoke([sys_msg] + state["messages"])
@@ -63,11 +70,14 @@ async def tool_execution_node(state: AgentState):
             if tool_call["name"] == "search_gds_inventory":
                 args = tool_call["args"]
                 result = search_gds_inventory.invoke(args)
-                tool_messages.append({
-                    "role": "tool",
-                    "content": result,
-                    "tool_call_id": tool_call["id"]
-                })
+                # Use a proper ToolMessage incl. the tool name; Gemini requires the
+                # function name on the response to correlate it with the call,
+                # otherwise the follow-up model turn comes back empty.
+                tool_messages.append(ToolMessage(
+                    content=result,
+                    tool_call_id=tool_call["id"],
+                    name=tool_call["name"],
+                ))
     
     return {"messages": tool_messages}
 
