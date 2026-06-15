@@ -1,5 +1,6 @@
 from typing import Optional
 from langchain_core.tools import tool
+from app.notifications import send_booking_lead_email
 
 # Mock in-memory GDS database
 MOCK_GDS = [
@@ -65,6 +66,19 @@ def submit_booking_lead(full_name: str, email: str, cruise_id: str) -> str:
     Submits a finalized booking lead to the travel agency CRM.
     MUST be called when the user has provided their name, email, and selected a cruise.
     """
-    # In reality, this would send an email or POST to a CRM API
     print(f"*** NEW BOOKING LEAD: {full_name} ({email}) wants to book {cruise_id} ***")
-    return "SUCCESS: Lead submitted to the agency. The travel advisor will email them the secure payment link."
+
+    # Look up the cruise so the agency email includes the voyage details.
+    cruise = next((v for v in MOCK_GDS if v["id"].lower() == cruise_id.lower()), None)
+    details = None
+    if cruise:
+        details = (f"- [{cruise['id']}] {cruise['nights']} nights in {cruise['region']} "
+                   f"on {cruise['cruise_line']} {cruise['ship']} for "
+                   f"${cruise['price_per_person']}pp (Date: {cruise['date']})")
+
+    sent = send_booking_lead_email(full_name, email, cruise_id, details)
+    if sent:
+        return ("SUCCESS: Lead emailed to the agency. The travel advisor will "
+                "email the customer the secure payment link.")
+    return ("SUCCESS: Lead recorded. NOTE: email notification is not configured, "
+            "so the agency was not actually emailed.")

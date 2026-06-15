@@ -16,10 +16,17 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://user:password@db:5432/travel_db
       - REDIS_URL=redis://redis:6379/0
       - API_KEY=dev-secret-key-12345
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Booking-lead email (Gmail SMTP). Set SMTP_USER/SMTP_APP_PASSWORD in your .env.
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_APP_PASSWORD=${SMTP_APP_PASSWORD:-}
+      - LEAD_NOTIFICATION_EMAIL=${LEAD_NOTIFICATION_EMAIL:-juanventure@gmail.com}
     depends_on:
       db:
         condition: service_healthy
