@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import String, Integer, Text, Boolean, DateTime
+from sqlalchemy import String, Integer, Text, Boolean, DateTime, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
@@ -104,6 +104,34 @@ async def mark_lead_emailed(lead_id: Optional[int], sent: bool) -> None:
                 await session.commit()
     except Exception as exc:  # noqa: BLE001
         print(f"[db] failed to update lead #{lead_id}: {exc!r}")
+
+
+async def list_booking_leads(limit: int = 500) -> list["BookingLead"]:
+    """Return recent booking leads (newest first). Empty list on DB error."""
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(BookingLead).order_by(BookingLead.created_at.desc()).limit(limit)
+            )
+            return list(result.scalars().all())
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to list booking leads: {exc!r}")
+        return []
+
+
+async def list_consultations(limit: int = 500) -> list["ConsultationInquiry"]:
+    """Return recent consultation inquiries (newest first). Empty list on DB error."""
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(ConsultationInquiry)
+                .order_by(ConsultationInquiry.created_at.desc())
+                .limit(limit)
+            )
+            return list(result.scalars().all())
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to list consultations: {exc!r}")
+        return []
 
 
 async def save_consultation(first_name: str, last_name: str, email: str,

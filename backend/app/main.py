@@ -14,6 +14,7 @@ from app.agent_wrapper import simulate_agent_thought_process, check_booking_stat
 from app.ratelimit import rate_limiter
 from app.captcha import enforce_chat_captcha, enforce_form_captcha
 from app.notifications import send_consultation_email
+from app.admin import router as admin_router
 from app.db import init_db, save_consultation, mark_consultation_emailed
 
 # Per-IP request caps (per minute). Override via env.
@@ -49,6 +50,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(admin_router)
 
 
 @app.get("/healthz")
