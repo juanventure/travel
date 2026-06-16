@@ -66,7 +66,9 @@ Make the advisor flow durable and reliable.
       `notifications.py`, `captcha.py`, `script.js`, `index.html`
 - [ ] **2d. Replace Calendly placeholder** (`script.js` `alert()`) with the real
       scheduling URL.
-- [ ] **2e. Admin view** — simple authenticated endpoint/page to list leads.
+- [x] **2e. Admin view** ✅ — HTTP Basic–protected `/admin` page lists booking
+      leads + consultation inquiries. Separate `ADMIN_USER`/`ADMIN_PASSWORD`
+      auth (not the public API key); disabled (503) when unconfigured. — `admin.py`, `db.py`, `main.py`
 
 ## Phase 3 — Self-serve booking & payments
 
@@ -150,3 +152,4 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 2a — lead persistence to Postgres.
 - Phase 2c — consultation form posts to `/api/consultation` (persist + email,
   Turnstile-gated), replacing the `mailto:` flow.
+- Phase 2e — HTTP Basic–protected `/admin` dashboard listing leads + inquiries.
