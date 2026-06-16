@@ -1,0 +1,53 @@
+# Render Blueprint for the Horizon Voyages backend.
+# Postgres (Neon) and Redis (Upstash) are external free-tier services, so this
+# only defines the FastAPI web service. Render reads this file when you create a
+# "Blueprint" from the repo. Secrets are marked sync:false — set their values in
+# the Render dashboard, never commit them here.
+services:
+  - type: web
+    name: horizon-voyages-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: starter            # ~$7/mo, no cold starts (use "free" to start at $0)
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # External services (paste connection strings from Neon / Upstash):
+      - key: DATABASE_URL
+        sync: false          # Neon Postgres URL (postgresql://…?sslmode=require)
+      - key: REDIS_URL
+        sync: false          # Upstash URL (rediss://…)
+      # AI + auth:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false          # must match API_KEY in the frontend config.js
+      # CORS: comma-separated list of your frontend origins (https://…):
+      - key: ALLOWED_ORIGINS
+        sync: false
+      # Bot protection (Cloudflare Turnstile SECRET key):
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+      # Admin dashboard (/admin) credentials — use a strong password:
+      - key: ADMIN_USER
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Email (Gmail SMTP):
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_APP_PASSWORD
+        sync: false
+      - key: LEAD_NOTIFICATION_EMAIL
+        sync: false
+      # Optional rate-limit overrides (defaults are fine):
+      - key: CHAT_RATE_LIMIT_PER_MINUTE
+        value: "20"
+      - key: CONSULTATION_RATE_LIMIT_PER_MINUTE
+        value: "5"

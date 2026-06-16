@@ -8,20 +8,42 @@ booking is never blocked by a database hiccup (the email is still attempted).
 import os
 from datetime import datetime, timezone
 from typing import Optional
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 from sqlalchemy import String, Integer, Text, Boolean, DateTime, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 
-def _async_url(url: str) -> str:
+def _prepare_db_url(url: str) -> tuple[str, dict]:
+    """
+    Return (sqlalchemy_url, connect_args) for the asyncpg driver.
+
+    Managed Postgres (Neon, Supabase, RDS, …) hand out libpq-style URLs with
+    query params like `?sslmode=require` / `channel_binding`, but asyncpg does
+    NOT accept those as connect args and will raise. So we strip the libpq-only
+    params and translate SSL intent into asyncpg's own `ssl` connect arg.
+    """
     # SQLAlchemy async needs the asyncpg driver prefix.
     if url.startswith("postgresql://"):
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    return url
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query))
+    connect_args: dict = {}
+
+    sslmode = query.pop("sslmode", None)
+    query.pop("channel_binding", None)  # libpq-only; asyncpg rejects it
+    if sslmode in ("require", "prefer", "allow", "verify-ca", "verify-full"):
+        connect_args["ssl"] = True
+
+    cleaned = urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
+    )
+    return cleaned, connect_args
 
 
-DATABASE_URL = _async_url(
+DATABASE_URL, _CONNECT_ARGS = _prepare_db_url(
     os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/travel_db")
 )
 
@@ -62,7 +84,11 @@ class ConsultationInquiry(Base):
     )
 
 
-engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+# pool_pre_ping + a modest recycle keep connections healthy against serverless
+# Postgres (e.g. Neon) that may drop idle connections / auto-suspend.
+engine = create_async_engine(
+    DATABASE_URL, pool_pre_ping=True, pool_recycle=300, connect_args=_CONNECT_ARGS
+)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
