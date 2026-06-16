@@ -64,8 +64,8 @@ Make the advisor flow durable and reliable.
       `consultation_inquiries` table BEFORE emailing the agency; frontend POSTs
       via `fetch` with the bot-check widget. — `main.py`, `db.py`,
       `notifications.py`, `captcha.py`, `script.js`, `index.html`
-- [ ] **2d. Replace Calendly placeholder** (`script.js` `alert()`) with the real
-      scheduling URL.
+- [x] **2d. Replace Calendly placeholder** ✅ — "Open Calendly" now links to
+      https://calendly.com/horizonvoyages (new tab); removed the `alert()` stub. — `index.html`, `script.js`
 - [x] **2e. Admin view** ✅ — HTTP Basic–protected `/admin` page lists booking
       leads + consultation inquiries. Separate `ADMIN_USER`/`ADMIN_PASSWORD`
       auth (not the public API key); disabled (503) when unconfigured. — `admin.py`, `db.py`, `main.py`
@@ -153,3 +153,4 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 2c — consultation form posts to `/api/consultation` (persist + email,
   Turnstile-gated), replacing the `mailto:` flow.
 - Phase 2e — HTTP Basic–protected `/admin` dashboard listing leads + inquiries.
+- Phase 2d — "Open Calendly" links to the real scheduler (new tab).

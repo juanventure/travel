@@ -232,17 +232,6 @@ if (form) {
   });
 }
 
-// ── Calendly link placeholder ──
-const calendlyLink = document.getElementById('calendly-link');
-if (calendlyLink) {
-  calendlyLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Replace with your actual Calendly URL:
-    // window.open('https://calendly.com/your-advisor', '_blank');
-    alert('Replace this with your Calendly URL in script.js line ~140');
-  });
-}
-
 // ── Parallax on hero image ──
 const heroImg = document.getElementById('hero-img');
 if (heroImg) {
