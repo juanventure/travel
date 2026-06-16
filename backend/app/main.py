@@ -1,19 +1,25 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from app.models import ChatRequest, BookingStatusResponse, ExecuteBookingRequest, ExecuteBookingResponse
+from app.models import (
+    ChatRequest, BookingStatusResponse, ExecuteBookingRequest, ExecuteBookingResponse,
+    ConsultationRequest, ConsultationResponse,
+)
 from app.security import get_api_key
 from app.agent_wrapper import simulate_agent_thought_process, check_booking_status, execute_final_booking
 from app.ratelimit import rate_limiter
-from app.captcha import enforce_chat_captcha
-from app.db import init_db
+from app.captcha import enforce_chat_captcha, enforce_form_captcha
+from app.notifications import send_consultation_email
+from app.db import init_db, save_consultation, mark_consultation_emailed
 
 # Per-IP request caps (per minute). Override via env.
 CHAT_RATE_LIMIT = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "20"))
 BOOKING_RATE_LIMIT = int(os.getenv("BOOKING_RATE_LIMIT_PER_MINUTE", "10"))
+CONSULTATION_RATE_LIMIT = int(os.getenv("CONSULTATION_RATE_LIMIT_PER_MINUTE", "5"))
 
 # Comma-separated list of allowed browser origins. Default "*" for dev; set to
 # your real frontend domain(s) in production.
@@ -63,6 +69,37 @@ async def cruise_chat(request: ChatRequest, http_request: Request, api_key: str 
         simulate_agent_thought_process(request.session_id, request.message),
         media_type="text/event-stream"
     )
+
+@app.post("/api/consultation", response_model=ConsultationResponse,
+          dependencies=[Depends(rate_limiter(CONSULTATION_RATE_LIMIT, "consultation"))])
+async def consultation(request: ConsultationRequest, http_request: Request,
+                       api_key: str = Depends(get_api_key)):
+    """
+    Capture a consultation request from the website form: bot-check, persist to
+    Postgres, then email the agency. Persists BEFORE emailing so an inquiry is
+    never lost even if email fails.
+    """
+    await enforce_form_captcha(request.captcha_token, http_request)
+
+    inquiry_id = await save_consultation(
+        first_name=request.fname, last_name=request.lname, email=request.email,
+        phone=request.phone, destination=request.destination,
+        budget=request.budget, message=request.message,
+    )
+
+    # Email off the event loop so the blocking SMTP call doesn't stall the request.
+    sent = await asyncio.to_thread(
+        send_consultation_email,
+        request.fname, request.lname, request.email,
+        request.phone, request.destination, request.budget, request.message,
+    )
+    await mark_consultation_emailed(inquiry_id, sent)
+
+    return ConsultationResponse(
+        success=True,
+        message="Thanks! Your consultation request has been received.",
+    )
+
 
 @app.get("/api/booking-status/{booking_id}", response_model=BookingStatusResponse)
 async def get_booking_status(booking_id: str, api_key: str = Depends(get_api_key)):

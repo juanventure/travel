@@ -59,8 +59,11 @@ Make the advisor flow durable and reliable.
       `agents.py`, `main.py` ✅
 - [ ] **2b. Production email** — move from Gmail SMTP to a transactional
       provider (SES/SendGrid/Resend) with SPF/DKIM for deliverability.
-- [ ] **2c. Consultation form posts to backend** instead of `mailto:` — new
-      `/api/consultation` endpoint that stores + emails the inquiry. — `script.js`, `main.py`, `db.py`
+- [x] **2c. Consultation form posts to backend** instead of `mailto:` ✅ — new
+      `/api/consultation` endpoint (Turnstile-gated, rate-limited) persists to a
+      `consultation_inquiries` table BEFORE emailing the agency; frontend POSTs
+      via `fetch` with the bot-check widget. — `main.py`, `db.py`,
+      `notifications.py`, `captcha.py`, `script.js`, `index.html`
 - [ ] **2d. Replace Calendly placeholder** (`script.js` `alert()`) with the real
       scheduling URL.
 - [ ] **2e. Admin view** — simple authenticated endpoint/page to list leads.
@@ -145,3 +148,5 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 1c — Cloudflare Turnstile bot protection on the chat (test keys; swap
   in real keys for prod).
 - Phase 2a — lead persistence to Postgres.
+- Phase 2c — consultation form posts to `/api/consultation` (persist + email,
+  Turnstile-gated), replacing the `mailto:` flow.

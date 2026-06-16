@@ -8,6 +8,21 @@ class ChatRequest(BaseModel):
     # when bot protection is enabled.
     captcha_token: Optional[str] = None
 
+class ConsultationRequest(BaseModel):
+    fname: str
+    lname: str
+    email: str
+    phone: Optional[str] = None
+    destination: Optional[str] = None
+    budget: Optional[str] = None
+    message: Optional[str] = None
+    # Cloudflare Turnstile token (required when bot protection is enabled).
+    captcha_token: Optional[str] = None
+
+class ConsultationResponse(BaseModel):
+    success: bool
+    message: str
+
 class BookingStatusResponse(BaseModel):
     booking_id: str
     status: str

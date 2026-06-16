@@ -69,3 +69,25 @@ async def enforce_chat_captcha(session_id: str, token: str | None, request: Requ
         await r.set(verified_key, "1", ex=VERIFIED_TTL_SECONDS)
     except Exception as exc:  # noqa: BLE001
         print(f"[captcha] failed to cache verified session ({exc!r}).")
+
+
+async def enforce_form_captcha(token: str | None, request: Request) -> None:
+    """
+    Verify a Turnstile token for a stateless one-off form submit (no session
+    memory, since each submit is independent). No-op when bot protection is
+    disabled. Raises 403 on a missing or invalid token.
+    """
+    if not TURNSTILE_SECRET:
+        return  # bot protection disabled (no secret configured)
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Captcha required.",
+        )
+
+    if not await _verify_token(token, _client_ip(request)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Captcha verification failed.",
+        )

@@ -45,6 +45,23 @@ class BookingLead(Base):
     )
 
 
+class ConsultationInquiry(Base):
+    __tablename__ = "consultation_inquiries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    first_name: Mapped[str] = mapped_column(String(255))
+    last_name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    destination: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    budget: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    email_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
 engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -87,3 +104,39 @@ async def mark_lead_emailed(lead_id: Optional[int], sent: bool) -> None:
                 await session.commit()
     except Exception as exc:  # noqa: BLE001
         print(f"[db] failed to update lead #{lead_id}: {exc!r}")
+
+
+async def save_consultation(first_name: str, last_name: str, email: str,
+                            phone: Optional[str] = None,
+                            destination: Optional[str] = None,
+                            budget: Optional[str] = None,
+                            message: Optional[str] = None) -> Optional[int]:
+    """Insert a consultation inquiry and return its id, or None if the write failed."""
+    try:
+        async with AsyncSessionLocal() as session:
+            inquiry = ConsultationInquiry(
+                first_name=first_name, last_name=last_name, email=email,
+                phone=phone, destination=destination, budget=budget, message=message,
+            )
+            session.add(inquiry)
+            await session.commit()
+            await session.refresh(inquiry)
+            print(f"[db] saved consultation inquiry #{inquiry.id} ({email})")
+            return inquiry.id
+    except Exception as exc:  # noqa: BLE001 - never block a submit on DB errors
+        print(f"[db] failed to save consultation inquiry: {exc!r}")
+        return None
+
+
+async def mark_consultation_emailed(inquiry_id: Optional[int], sent: bool) -> None:
+    """Update whether the agency notification email was sent for an inquiry."""
+    if inquiry_id is None:
+        return
+    try:
+        async with AsyncSessionLocal() as session:
+            inquiry = await session.get(ConsultationInquiry, inquiry_id)
+            if inquiry is not None:
+                inquiry.email_sent = sent
+                await session.commit()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to update inquiry #{inquiry_id}: {exc!r}")
