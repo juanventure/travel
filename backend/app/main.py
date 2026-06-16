@@ -1,13 +1,14 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from app.models import ChatRequest, BookingStatusResponse, ExecuteBookingRequest, ExecuteBookingResponse
 from app.security import get_api_key
 from app.agent_wrapper import simulate_agent_thought_process, check_booking_status, execute_final_booking
 from app.ratelimit import rate_limiter
+from app.captcha import enforce_chat_captcha
 from app.db import init_db
 
 # Per-IP request caps (per minute). Override via env.
@@ -51,10 +52,13 @@ async def healthz():
 
 
 @app.post("/api/cruise-chat", dependencies=[Depends(rate_limiter(CHAT_RATE_LIMIT, "chat"))])
-async def cruise_chat(request: ChatRequest, api_key: str = Depends(get_api_key)):
+async def cruise_chat(request: ChatRequest, http_request: Request, api_key: str = Depends(get_api_key)):
     """
     Handles user queries and streams the AI agent's responses.
     """
+    # Bot protection: the first message of a session must carry a valid Turnstile
+    # token (no-op when TURNSTILE_SECRET_KEY is unset or the session is verified).
+    await enforce_chat_captcha(request.session_id, request.captcha_token, http_request)
     return StreamingResponse(
         simulate_agent_thought_process(request.session_id, request.message),
         media_type="text/event-stream"

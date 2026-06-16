@@ -16,7 +16,8 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 _redis = None
 
 
-def _get_redis():
+def get_redis():
+    """Shared lazy async Redis client (also used by captcha session tracking)."""
     global _redis
     if _redis is None:
         _redis = aioredis.from_url(REDIS_URL, decode_responses=True)
@@ -36,7 +37,7 @@ def rate_limiter(limit_per_minute: int, bucket: str):
 
     async def _dependency(request: Request):
         try:
-            r = _get_redis()
+            r = get_redis()
             ip = _client_ip(request)
             window = int(time.time() // 60)
             key = f"rl:{bucket}:{ip}:{window}"

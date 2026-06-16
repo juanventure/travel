@@ -41,8 +41,10 @@ Protects the public LLM endpoint from cost-abuse and locks the browser surface.
 - [x] **1a. Rate limiting** (Redis-backed, per-IP) on `/api/cruise-chat` and
       `/api/execute-booking`. — `ratelimit.py`, `main.py` ✅
 - [x] **1b. Lock CORS** to configured origins via `ALLOWED_ORIGINS`. — `main.py` ✅
-- [ ] **1c. Bot check** (Cloudflare Turnstile or reCAPTCHA) on the chat first
-      message and consultation form. *Needs site/secret keys from owner.*
+- [x] **1c. Bot check** (Cloudflare Turnstile) on the chat first message ✅
+      — `captcha.py`, frontend Turnstile widget. Uses test keys by default;
+      swap in real site/secret keys for production. (Consultation form gets it
+      with 2c.)
 - [x] **1d. Honour `X-Forwarded-For`** for client IP behind a proxy/ALB. ✅
 
 Verify: hammer an endpoint past the limit → `429`; browser requests from a
@@ -137,7 +139,9 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 4. Deposit vs. full payment for self-serve; refund/cancellation policy.
 5. Hosting target (simple PaaS vs. full AWS per README).
 
-## Status — done in this session
+## Status — done
 
 - Phase 1a, 1b, 1d — rate limiting + CORS lock + proxy IP handling.
+- Phase 1c — Cloudflare Turnstile bot protection on the chat (test keys; swap
+  in real keys for prod).
 - Phase 2a — lead persistence to Postgres.
