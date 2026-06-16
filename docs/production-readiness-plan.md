@@ -98,8 +98,10 @@ PCI scope.
 - [ ] **4a. Durable LangGraph checkpointer** — replace `MemorySaver` with a
       Postgres/Redis saver so chat state survives restarts and scales.
 - [ ] **4b. Health-check endpoint** (`/healthz`) for the load balancer.
-- [ ] **4c. Config-driven frontend** — backend URL + public keys from build/env,
-      not hardcoded.
+- [x] **4c. Config-driven frontend** ✅ — backend URL + public keys moved out of
+      `script.js` into `config.js` (`window.APP_CONFIG`), loaded before the app
+      and swappable per environment with no rebuild. `script.js` reads it with
+      safe fallbacks. — `config.js`, `index.html`, `script.js`
 - [ ] **4d. Secrets manager** (AWS Secrets Manager per README) instead of `.env`.
 - [ ] **4e. Error tracking + logging** (Sentry), uptime monitoring, structured logs.
 - [ ] **4f. LLM cost controls** — paid Gemini tier, budget alerts, per-session caps.
@@ -165,3 +167,4 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 2e — HTTP Basic–protected `/admin` dashboard listing leads + inquiries.
 - Phase 2d — "Open Calendly" links to the real scheduler (new tab).
 - Phase 2b — decided to stay on Gmail SMTP (no transactional provider).
+- Phase 4c — config-driven frontend (`config.js` / `window.APP_CONFIG`).
