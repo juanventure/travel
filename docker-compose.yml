@@ -24,6 +24,10 @@ services:
       # Per-IP rate limits (requests/minute)
       - CHAT_RATE_LIMIT_PER_MINUTE=${CHAT_RATE_LIMIT_PER_MINUTE:-20}
       - BOOKING_RATE_LIMIT_PER_MINUTE=${BOOKING_RATE_LIMIT_PER_MINUTE:-10}
+      # Cloudflare Turnstile bot protection. Default = official "always passes"
+      # TEST secret; replace with your real secret key in production (and the
+      # site key in the frontend). Empty value disables bot protection.
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
       - API_KEY=dev-secret-key-12345
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       # Booking-lead email (Gmail SMTP). Set SMTP_USER/SMTP_APP_PASSWORD in your .env.

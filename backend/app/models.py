@@ -4,6 +4,9 @@ from typing import Optional, Dict, Any
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+    # Cloudflare Turnstile token, required on the first message of a session
+    # when bot protection is enabled.
+    captcha_token: Optional[str] = None
 
 class BookingStatusResponse(BaseModel):
     booking_id: str

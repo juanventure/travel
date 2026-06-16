@@ -8,7 +8,7 @@ class CruiseChatClient {
     /**
      * Sends a message to the AI and yields streamed responses.
      */
-    async *sendMessage(message) {
+    async *sendMessage(message, captchaToken = null) {
         const response = await fetch(`${this.baseUrl}/api/cruise-chat`, {
             method: 'POST',
             headers: {
@@ -17,7 +17,8 @@ class CruiseChatClient {
             },
             body: JSON.stringify({
                 session_id: this.sessionId,
-                message: message
+                message: message,
+                captcha_token: captchaToken
             })
         });
 

@@ -224,9 +224,30 @@ if (chatToggle && chatWindow) {
   // Initialize the CruiseChatClient pointing to the local FastAPI dev server
   const chatClient = new CruiseChatClient('http://localhost:8000', 'dev-secret-key-12345');
 
+  // ── Cloudflare Turnstile bot protection ──
+  // Replace with your real site key in production. The default is Cloudflare's
+  // "always passes" TEST site key (pairs with the test secret on the backend).
+  const TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+  const captchaEl = document.getElementById('chat-captcha');
+  let captchaToken = null;
+  let captchaWidgetId = null;
+
+  function renderCaptcha() {
+    if (captchaWidgetId !== null || !window.turnstile || !captchaEl) return;
+    captchaWidgetId = window.turnstile.render(captchaEl, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { captchaToken = token; },
+      'expired-callback': () => { captchaToken = null; },
+      'error-callback': () => { captchaToken = null; },
+    });
+  }
+
   chatToggle.addEventListener('click', () => {
     chatWindow.hidden = !chatWindow.hidden;
-    if (!chatWindow.hidden) chatInput.focus();
+    if (!chatWindow.hidden) {
+      chatInput.focus();
+      renderCaptcha(); // render lazily the first time the chat opens
+    }
   });
 
   chatClose.addEventListener('click', () => {
@@ -256,13 +277,18 @@ if (chatToggle && chatWindow) {
     const thoughtMsg = appendMessage('Thinking...', 'ai-msg thought-msg');
 
     try {
-      for await (const chunk of chatClient.sendMessage(text)) {
+      for await (const chunk of chatClient.sendMessage(text, captchaToken)) {
         if (chunk.type === 'thought') {
           thoughtMsg.querySelector('.msg-content').textContent = chunk.content;
         } else if (chunk.type === 'message') {
           thoughtMsg.remove();
           appendMessage(chunk.content, 'ai-msg');
         }
+      }
+      // Turnstile tokens are single-use; reset so a fresh one is ready if needed.
+      if (captchaWidgetId !== null && window.turnstile) {
+        window.turnstile.reset(captchaWidgetId);
+        captchaToken = null;
       }
     } catch (err) {
       console.error(err);
