@@ -3,12 +3,13 @@
    ============================================== */
 
 // ── Backend / integration config ──
-// Point these at your deployed backend + real Turnstile site key in production.
-const API_BASE = 'http://localhost:8000';
-const API_KEY = 'dev-secret-key-12345';
-// Cloudflare Turnstile site key. Default = official "always passes" TEST key
-// (pairs with the test secret on the backend).
-const TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+// Values come from config.js (window.APP_CONFIG), loaded before this script so
+// they can be swapped per environment without touching app code. Fallbacks keep
+// the app working if config.js is missing.
+const _cfg = window.APP_CONFIG || {};
+const API_BASE = _cfg.API_BASE || 'http://localhost:8000';
+const API_KEY = _cfg.API_KEY || 'dev-secret-key-12345';
+const TURNSTILE_SITE_KEY = _cfg.TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
 
 // ── Navbar scroll effect ──
 const navbar = document.getElementById('navbar');
