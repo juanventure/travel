@@ -57,8 +57,10 @@ Make the advisor flow durable and reliable.
 - [x] **2a. Persist leads to Postgres** (`booking_leads` table) — saved before
       the email so a lead is never lost; record `email_sent`. — `db.py`,
       `agents.py`, `main.py` ✅
-- [ ] **2b. Production email** — move from Gmail SMTP to a transactional
-      provider (SES/SendGrid/Resend) with SPF/DKIM for deliverability.
+- [x] **2b. Production email** — **DECISION (2026-06-16): stay on Gmail SMTP.**
+      Lead/consultation volume is low, so Gmail's limits are not a concern and a
+      transactional provider isn't warranted. Keep the existing
+      `notifications.py` Gmail-SMTP path. Caveats accepted (see below).
 - [x] **2c. Consultation form posts to backend** instead of `mailto:` ✅ — new
       `/api/consultation` endpoint (Turnstile-gated, rate-limited) persists to a
       `consultation_inquiries` table BEFORE emailing the agency; frontend POSTs
@@ -138,7 +140,15 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 
 ## Decisions still needed from owner
 
-1. Email provider for production (SES vs SendGrid vs Resend).
+1. ~~Email provider for production (SES vs SendGrid vs Resend).~~ **Decided
+   2026-06-16: stay on Gmail SMTP.** Caveats accepted:
+   - Gmail free-tier sends ~500 emails/day (Workspace ~2,000) — fine at current
+     lead volume, revisit if it grows.
+   - These are internal *notification* emails to the agency, not bulk mail to
+     customers, so spam/deliverability risk is minimal. If customer-facing email
+     (Phase 3e receipts) is added later, reconsider a transactional provider.
+   - Requires a Gmail **App Password** (`SMTP_APP_PASSWORD`), not the login
+     password; 2FA must stay enabled on the account.
 2. Bot-protection choice + keys (Turnstile vs reCAPTCHA).
 3. Inventory source — curated list vs. real supplier/GDS integration.
 4. Deposit vs. full payment for self-serve; refund/cancellation policy.
@@ -154,3 +164,4 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
   Turnstile-gated), replacing the `mailto:` flow.
 - Phase 2e — HTTP Basic–protected `/admin` dashboard listing leads + inquiries.
 - Phase 2d — "Open Calendly" links to the real scheduler (new tab).
+- Phase 2b — decided to stay on Gmail SMTP (no transactional provider).
