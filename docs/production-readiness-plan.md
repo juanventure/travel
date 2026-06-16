@@ -110,11 +110,18 @@ PCI scope.
 
 ## Phase 5 — Deploy & domain
 
-- [ ] **5a. Frontend** → S3+CloudFront (per README) or Netlify/Vercel.
-- [ ] **5b. Backend** → start simple (Render/Fly.io/Railway) or the README's
-      ECS Fargate + RDS + ElastiCache for full AWS.
-- [ ] **5c. Domain + TLS** everywhere; HTTPS-only.
+**Stack chosen (2026-06-16):** Cloudflare Pages (frontend) + Render Starter
+(backend) + Neon (Postgres) + Upstash (Redis) + Cloudflare Turnstile + a `.com`
+domain. ≈ $7/mo + ~$10/yr. **Repo is prepped + a step-by-step guide is written:
+[`docs/deploy.md`](deploy.md).** Remaining work is owner account setup per the guide.
+
+- [~] **5a. Frontend** → Cloudflare Pages. *Ready — follow deploy.md §5.*
+- [~] **5b. Backend** → Render (Docker, `$PORT`-aware) + Neon + Upstash;
+      Blueprint at `render.yaml`, `db.py` handles managed-Postgres SSL.
+      *Ready — follow deploy.md §1–4.*
+- [ ] **5c. Domain + TLS** everywhere; HTTPS-only. *Guide: deploy.md §8 (TLS auto).*
 - [ ] **5d. Rotate all exposed secrets** (incl. the Gemini key shared earlier).
+      *Checklist: deploy.md §10.*
 
 ## Phase 6 — Legal & business
 
@@ -154,7 +161,8 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 2. Bot-protection choice + keys (Turnstile vs reCAPTCHA).
 3. Inventory source — curated list vs. real supplier/GDS integration.
 4. Deposit vs. full payment for self-serve; refund/cancellation policy.
-5. Hosting target (simple PaaS vs. full AWS per README).
+5. ~~Hosting target (simple PaaS vs. full AWS per README).~~ **Decided
+   2026-06-16:** Cloudflare Pages + Render + Neon + Upstash (see Phase 5 / `docs/deploy.md`).
 
 ## Status — done
 
@@ -168,3 +176,5 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 2d — "Open Calendly" links to the real scheduler (new tab).
 - Phase 2b — decided to stay on Gmail SMTP (no transactional provider).
 - Phase 4c — config-driven frontend (`config.js` / `window.APP_CONFIG`).
+- Phase 5 prep — deploy stack chosen, repo prepped (`render.yaml`, `$PORT`,
+  managed-Postgres SSL), step-by-step guide at `docs/deploy.md`.
