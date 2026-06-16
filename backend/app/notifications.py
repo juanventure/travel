@@ -64,3 +64,55 @@ def send_booking_lead_email(full_name: str, email: str, cruise_id: str,
     except Exception as exc:  # noqa: BLE001 - log and degrade, never break booking
         print(f"[notifications] Failed to send booking-lead email: {exc!r}")
         return False
+
+
+def send_consultation_email(first_name: str, last_name: str, email: str,
+                            phone: Optional[str] = None,
+                            destination: Optional[str] = None,
+                            budget: Optional[str] = None,
+                            message: Optional[str] = None) -> bool:
+    """
+    Email a new consultation inquiry to the agency. Returns True if sent, False
+    if skipped (not configured) or failed (error is logged). Same SMTP config as
+    the booking-lead email above.
+    """
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_APP_PASSWORD")
+    if not smtp_user or not smtp_password:
+        print("[notifications] SMTP not configured (set SMTP_USER and "
+              "SMTP_APP_PASSWORD); skipping consultation email.")
+        return False
+
+    host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.getenv("SMTP_PORT", "465"))
+    recipient = os.getenv("LEAD_NOTIFICATION_EMAIL", "juanventure@gmail.com")
+
+    full_name = f"{first_name} {last_name}".strip()
+    msg = EmailMessage()
+    msg["Subject"] = f"New Cruise Consultation Request: {full_name}"
+    msg["From"] = smtp_user
+    msg["To"] = recipient
+    msg["Reply-To"] = email  # so the advisor can reply straight to the customer
+    body = (
+        "A new consultation request was submitted through the Horizon Voyages site.\n\n"
+        f"Name:        {full_name}\n"
+        f"Email:       {email}\n"
+        f"Phone:       {phone or '—'}\n"
+        f"Destination: {destination or '—'}\n"
+        f"Budget:      {budget or '—'}\n"
+    )
+    if message:
+        body += f"\nMessage:\n{message}\n"
+    body += "\nFollow up within one business day to confirm a consultation time."
+    msg.set_content(body)
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        print(f"[notifications] Consultation email sent to {recipient}")
+        return True
+    except Exception as exc:  # noqa: BLE001 - log and degrade, never break submit
+        print(f"[notifications] Failed to send consultation email: {exc!r}")
+        return False

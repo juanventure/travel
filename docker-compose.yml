@@ -24,6 +24,7 @@ services:
       # Per-IP rate limits (requests/minute)
       - CHAT_RATE_LIMIT_PER_MINUTE=${CHAT_RATE_LIMIT_PER_MINUTE:-20}
       - BOOKING_RATE_LIMIT_PER_MINUTE=${BOOKING_RATE_LIMIT_PER_MINUTE:-10}
+      - CONSULTATION_RATE_LIMIT_PER_MINUTE=${CONSULTATION_RATE_LIMIT_PER_MINUTE:-5}
       # Cloudflare Turnstile bot protection. Default = official "always passes"
       # TEST secret; replace with your real secret key in production (and the
       # site key in the frontend). Empty value disables bot protection.

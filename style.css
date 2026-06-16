@@ -782,6 +782,14 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 }
 .form-group textarea { resize: vertical; min-height: 80px; }
 .form-note { font-size: .78rem; color: var(--muted); text-align: center; }
+.form-captcha { display: flex; justify-content: center; margin: 4px 0; }
+.form-captcha:empty { display: none; }
+.form-error {
+  font-size: .85rem;
+  color: #e05c5c;
+  text-align: center;
+  margin: 4px 0 0;
+}
 .inline-link { color: var(--gold); border-bottom: 1px solid rgba(200,169,110,.3); }
 .inline-link:hover { color: var(--gold-light); }
 .form-success {

@@ -2,6 +2,14 @@
    HORIZON VOYAGES — SCRIPT
    ============================================== */
 
+// ── Backend / integration config ──
+// Point these at your deployed backend + real Turnstile site key in production.
+const API_BASE = 'http://localhost:8000';
+const API_KEY = 'dev-secret-key-12345';
+// Cloudflare Turnstile site key. Default = official "always passes" TEST key
+// (pairs with the test secret on the backend).
+const TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+
 // ── Navbar scroll effect ──
 const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
@@ -117,12 +125,44 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
 const form    = document.getElementById('consult-form');
 const success = document.getElementById('form-success');
 const submitBtn = document.getElementById('form-submit');
+const formError = document.getElementById('form-error');
 
 if (form) {
+  // Render the Turnstile bot-protection widget into the form.
+  const consultCaptchaEl = document.getElementById('consult-captcha');
+  let consultCaptchaToken = null;
+  let consultCaptchaWidgetId = null;
+
+  function renderConsultCaptcha() {
+    if (consultCaptchaWidgetId !== null || !window.turnstile || !consultCaptchaEl) return;
+    consultCaptchaWidgetId = window.turnstile.render(consultCaptchaEl, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => { consultCaptchaToken = token; },
+      'expired-callback': () => { consultCaptchaToken = null; },
+      'error-callback': () => { consultCaptchaToken = null; },
+    });
+  }
+  // Turnstile's async script may not be ready when this runs; retry briefly.
+  if (window.turnstile) {
+    renderConsultCaptcha();
+  } else {
+    const t = setInterval(() => {
+      if (window.turnstile) { renderConsultCaptcha(); clearInterval(t); }
+    }, 300);
+    setTimeout(() => clearInterval(t), 10000);
+  }
+
+  function showFormError(msg) {
+    if (!formError) return;
+    formError.textContent = msg;
+    formError.hidden = false;
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btnText = submitBtn.querySelector('.btn-text');
     const btnLoad = submitBtn.querySelector('.btn-loading');
+    if (formError) formError.hidden = true;
 
     // Simple validation
     const required = form.querySelectorAll('[required]');
@@ -143,34 +183,47 @@ if (form) {
       return;
     }
 
-    // Gather form data and trigger email client
     const formData = new FormData(form);
-    const fname = formData.get('fname');
-    const lname = formData.get('lname');
-    const email = formData.get('email');
-    const phone = formData.get('phone');
-    const destination = formData.get('destination');
-    const budget = formData.get('budget');
-    const message = formData.get('message');
-
-    const subject = `New Cruise Consultation Request: ${fname} ${lname}`;
-    const body = `Name: ${fname} ${lname}\nEmail: ${email}\nPhone: ${phone}\nDestination: ${destination}\nBudget: ${budget}\n\nMessage: ${message}`;
+    const payload = {
+      fname: formData.get('fname'),
+      lname: formData.get('lname'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      destination: formData.get('destination'),
+      budget: formData.get('budget'),
+      message: formData.get('message'),
+      captcha_token: consultCaptchaToken,
+    };
 
     btnText.hidden = true;
     btnLoad.hidden = false;
     submitBtn.disabled = true;
 
-    await new Promise(r => setTimeout(r, 800));
-
-    // Open user's default email client using a hidden anchor link to prevent page unload halt
-    const mailtoLink = document.createElement('a');
-    mailtoLink.href = `mailto:juanventure@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    document.body.appendChild(mailtoLink);
-    mailtoLink.click();
-    document.body.removeChild(mailtoLink);
-
-    form.hidden = true;
-    success.hidden = false;
+    try {
+      const resp = await fetch(`${API_BASE}/api/consultation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        throw new Error(resp.status === 403
+          ? 'Please complete the verification challenge and try again.'
+          : `Request failed (${resp.status}).`);
+      }
+      form.hidden = true;
+      success.hidden = false;
+    } catch (err) {
+      console.error(err);
+      showFormError(`${err.message || 'Something went wrong.'} Please try again, or email us directly.`);
+      btnText.hidden = false;
+      btnLoad.hidden = true;
+      submitBtn.disabled = false;
+      // Reset the (single-use) Turnstile token so the user can retry.
+      if (consultCaptchaWidgetId !== null && window.turnstile) {
+        window.turnstile.reset(consultCaptchaWidgetId);
+        consultCaptchaToken = null;
+      }
+    }
   });
 
   // Live field validation reset
@@ -221,13 +274,10 @@ const chatInput = document.getElementById('chat-input');
 const chatMessages = document.getElementById('chat-messages');
 
 if (chatToggle && chatWindow) {
-  // Initialize the CruiseChatClient pointing to the local FastAPI dev server
-  const chatClient = new CruiseChatClient('http://localhost:8000', 'dev-secret-key-12345');
+  // Initialize the CruiseChatClient pointing to the configured backend
+  const chatClient = new CruiseChatClient(API_BASE, API_KEY);
 
   // ── Cloudflare Turnstile bot protection ──
-  // Replace with your real site key in production. The default is Cloudflare's
-  // "always passes" TEST site key (pairs with the test secret on the backend).
-  const TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
   const captchaEl = document.getElementById('chat-captcha');
   let captchaToken = null;
   let captchaWidgetId = null;
