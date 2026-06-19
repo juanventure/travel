@@ -21,6 +21,8 @@ window.APP_CONFIG = {
   // Public API key sent as the X-API-Key header.
   API_KEY: 'dev-secret-key-12345',
 
-  // Cloudflare Turnstile SITE key. Default = official "always passes" TEST key.
-  TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  // Cloudflare Turnstile SITE key (public). Real widget "Horizon Voyages (local)",
+  // allowed hostname: localhost. Pair with the matching secret key in the backend
+  // (TURNSTILE_SECRET_KEY). The old "always passes" test key was 1x00000000000000000000AA.
+  TURNSTILE_SITE_KEY: '0x4AAAAAADmBF37X0IN7DiSp',
 };
