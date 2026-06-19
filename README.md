@@ -20,6 +20,11 @@ docker-compose up --build
 - Frontend: `http://localhost:80`
 - Backend API: `http://localhost:8000`
 
+> **Setting up on a new machine** (clone + secrets + Claude Code history):
+> see [docs/local-setup.md](docs/local-setup.md).
+> **Cloud deployment** (Cloudflare Pages + Render + Neon + Upstash):
+> see [docs/deploy.md](docs/deploy.md).
+
 ---
 
 ## 2. Pushing the Docker Image to ECR
