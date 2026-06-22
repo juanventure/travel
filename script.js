@@ -271,14 +271,26 @@ if (chatToggle && chatWindow) {
   const captchaEl = document.getElementById('chat-captcha');
   let captchaToken = null;
   let captchaWidgetId = null;
+  // Once the first message succeeds, the backend remembers this session (24h),
+  // so the bot-check widget is no longer needed and stays hidden.
+  let captchaVerified = false;
+
+  function showCaptcha(visible) {
+    if (captchaEl) captchaEl.style.display = visible ? '' : 'none';
+  }
 
   function renderCaptcha() {
     if (captchaWidgetId !== null || !window.turnstile || !captchaEl) return;
     captchaWidgetId = window.turnstile.render(captchaEl, {
       sitekey: TURNSTILE_SITE_KEY,
-      callback: (token) => { captchaToken = token; },
-      'expired-callback': () => { captchaToken = null; },
-      'error-callback': () => { captchaToken = null; },
+      callback: (token) => {
+        captchaToken = token;
+        // Human confirmed — let the "Success!" tick show briefly, then collapse
+        // the widget so it doesn't clutter the chat.
+        setTimeout(() => { if (captchaToken) showCaptcha(false); }, 1000);
+      },
+      'expired-callback': () => { captchaToken = null; if (!captchaVerified) showCaptcha(true); },
+      'error-callback': () => { captchaToken = null; if (!captchaVerified) showCaptcha(true); },
     });
   }
 
@@ -325,15 +337,21 @@ if (chatToggle && chatWindow) {
           appendMessage(chunk.content, 'ai-msg');
         }
       }
-      // Turnstile tokens are single-use; reset so a fresh one is ready if needed.
-      if (captchaWidgetId !== null && window.turnstile) {
-        window.turnstile.reset(captchaWidgetId);
-        captchaToken = null;
-      }
+      // First successful exchange verifies this session server-side (remembered
+      // for 24h), so the bot-check widget is no longer needed — keep it hidden.
+      captchaVerified = true;
+      captchaToken = null;
+      showCaptcha(false);
     } catch (err) {
       console.error(err);
       thoughtMsg.remove();
       appendMessage('Sorry, I am having trouble connecting to the backend. Please try again later.', 'ai-msg');
+      // Not verified yet — restore a fresh challenge so the user can retry.
+      if (!captchaVerified && captchaWidgetId !== null && window.turnstile) {
+        window.turnstile.reset(captchaWidgetId);
+        captchaToken = null;
+        showCaptcha(true);
+      }
     }
   });
 }
