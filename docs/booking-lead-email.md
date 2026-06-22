@@ -113,10 +113,10 @@ Expected on success: `[notifications] Booking-lead email sent to juanventure@gma
 
 Ordered by value/effort:
 
-1. ~~**Don't block the event loop.**~~ ✅ Done — the send runs via
+1. ~~**Don't block the event loop.**~~  Done — the send runs via
    `asyncio.to_thread(...)` in `booking_node`, so blocking SMTP no longer stalls
    the request/event loop.
-2. ~~**Truthful confirmation.**~~ ✅ Done — `booking_node` builds the confirmation
+2. ~~**Truthful confirmation.**~~  Done — `booking_node` builds the confirmation
    from the actual send result: a positive advisor-follow-up message only when the
    email sent, an honest fallback otherwise. Email sending moved out of the tool
    (now record-only) into the node so the result can drive the message.

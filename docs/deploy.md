@@ -24,6 +24,29 @@ The repo is already prepared for this: the Dockerfile binds to the host's
 
 ---
 
+## Launch status (updated 2026-06-22)
+
+External services and secrets are **already provisioned** — their values live in
+`backend/.env` (gitignored) and the owner's secrets file, never in this repo:
+
+| Prerequisite | Status |
+|---|---|
+| Neon Postgres (`DATABASE_URL`) | provisioned |
+| Upstash Redis (`REDIS_URL`) | provisioned |
+| Cloudflare Turnstile (site + secret keys) | have real keys (add prod domain as an allowed hostname in step 3) |
+| Google Gemini API key | Done |
+| Gmail App Password (SMTP) | Done |
+| Admin dashboard password | Done |
+| Code on GitHub (`juanventure/travel`) | Done |
+| Local end-to-end test (chat, inventory tool, DB, admin) | passing on Python 3.11 |
+
+**Remaining owner steps to go live:** §4 (deploy backend on Render) → §5 (deploy
+frontend on Cloudflare Pages) → §6 (wire `config.js` to the Render URL) → §7
+(lock `ALLOWED_ORIGINS`) → §9 (verify) → §10 (rotate secrets). §8 (custom domain)
+is optional for a first launch — you can go live on the free `*.pages.dev` URL.
+
+---
+
 ## 0. Prerequisites
 
 - The repo is on GitHub (it is: `juanventure/travel`).
@@ -98,19 +121,19 @@ get real keys:
 3. Click **Apply**. Render will prompt for the env vars marked `sync:false` —
    fill them in:
 
-   | Variable | Value |
-   |----------|-------|
-   | `DATABASE_URL` | Neon string (step 1) |
-   | `REDIS_URL` | Upstash `rediss://` string (step 2) |
-   | `GOOGLE_API_KEY` | your Gemini key |
-   | `API_KEY` | invent a value, e.g. `hv-prod-<random>` — you'll reuse it in `config.js` |
-   | `ALLOWED_ORIGINS` | leave blank for now; set in step 7 once you know the frontend URL |
-   | `TURNSTILE_SECRET_KEY` | Turnstile secret (step 3), or leave the test key |
-   | `ADMIN_USER` | e.g. `admin` |
-   | `ADMIN_PASSWORD` | a strong password |
-   | `SMTP_USER` | your Gmail address |
-   | `SMTP_APP_PASSWORD` | your 16-char Gmail App Password |
-   | `LEAD_NOTIFICATION_EMAIL` | where leads should be emailed |
+ | Variable | Value |
+ |----------|-------|
+ | `DATABASE_URL` | Neon string (step 1) |
+ | `REDIS_URL` | Upstash `rediss://` string (step 2) |
+ | `GOOGLE_API_KEY` | your Gemini key |
+ | `API_KEY` | invent a value, e.g. `hv-prod-<random>` — you'll reuse it in `config.js` |
+ | `ALLOWED_ORIGINS` | leave blank for now; set in step 7 once you know the frontend URL |
+ | `TURNSTILE_SECRET_KEY` | Turnstile secret (step 3), or leave the test key |
+ | `ADMIN_USER` | e.g. `admin` |
+ | `ADMIN_PASSWORD` | a strong password |
+ | `SMTP_USER` | your Gmail address |
+ | `SMTP_APP_PASSWORD` | your 16-char Gmail App Password |
+ | `LEAD_NOTIFICATION_EMAIL` | where leads should be emailed |
 
 4. Deploy. When it's live, copy the service URL, e.g.
    `https://horizon-voyages-backend.onrender.com`.

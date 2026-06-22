@@ -17,20 +17,20 @@ tasks, the files involved, and how to verify.
 
 | Area | State |
 |------|-------|
-| AI chat (consultation/inventory/booking) | ✅ Working (Gemini 2.5-flash) |
-| Inventory | ❌ Mock — 3 hardcoded cruises in `tools.py` (`MOCK_GDS`) |
-| Lead capture | ⚠️ Email + logs only; **no persistence** |
-| Agency email | ✅ Working (Gmail SMTP); deliverability not production-grade |
-| Payments / reservations | ❌ Stub — `execute_final_booking`/`check_booking_status` return fake data |
-| Auth | ⚠️ Single shared `X-API-Key`, exposed in frontend JS |
-| CORS | ⚠️ `allow_origins=["*"]` |
-| Rate limiting | ❌ None (Redis provisioned but unused) |
-| Conversation state | ⚠️ In-memory `MemorySaver` (lost on restart, not multi-instance) |
-| Frontend backend URL | ⚠️ Hardcoded `http://localhost:8000` |
-| Consultation form | ⚠️ `mailto:` (unreliable) |
-| Hosting / domain / TLS | ❌ None |
-| Tests / CI / monitoring | ❌ None |
-| Legal (privacy/terms) | ❌ None |
+| AI chat (consultation/inventory/booking) | Working (Gemini 2.5-flash) |
+| Inventory | Mock — 3 hardcoded cruises in `tools.py` (`MOCK_GDS`) |
+| Lead capture | Email + logs only; **no persistence** |
+| Agency email | Working (Gmail SMTP); deliverability not production-grade |
+| Payments / reservations | Stub — `execute_final_booking`/`check_booking_status` return fake data |
+| Auth | Single shared `X-API-Key`, exposed in frontend JS |
+| CORS | `allow_origins=["*"]` |
+| Rate limiting | None (Redis provisioned but unused) |
+| Conversation state | In-memory `MemorySaver` (lost on restart, not multi-instance) |
+| Frontend backend URL | Hardcoded `http://localhost:8000` |
+| Consultation form | `mailto:` (unreliable) |
+| Hosting / domain / TLS | None |
+| Tests / CI / monitoring | None |
+| Legal (privacy/terms) | None |
 
 ---
 
@@ -39,13 +39,13 @@ tasks, the files involved, and how to verify.
 Protects the public LLM endpoint from cost-abuse and locks the browser surface.
 
 - [x] **1a. Rate limiting** (Redis-backed, per-IP) on `/api/cruise-chat` and
-      `/api/execute-booking`. — `ratelimit.py`, `main.py` ✅
-- [x] **1b. Lock CORS** to configured origins via `ALLOWED_ORIGINS`. — `main.py` ✅
-- [x] **1c. Bot check** (Cloudflare Turnstile) on the chat first message ✅
+      `/api/execute-booking`. — `ratelimit.py`, `main.py`
+- [x] **1b. Lock CORS** to configured origins via `ALLOWED_ORIGINS`. — `main.py`
+- [x] **1c. Bot check** (Cloudflare Turnstile) on the chat first message
       — `captcha.py`, frontend Turnstile widget. Uses test keys by default;
       swap in real site/secret keys for production. (Consultation form gets it
       with 2c.)
-- [x] **1d. Honour `X-Forwarded-For`** for client IP behind a proxy/ALB. ✅
+- [x] **1d. Honour `X-Forwarded-For`** for client IP behind a proxy/ALB.
 
 Verify: hammer an endpoint past the limit → `429`; browser requests from a
 non-allowed origin are blocked while the real frontend works.
@@ -56,19 +56,19 @@ Make the advisor flow durable and reliable.
 
 - [x] **2a. Persist leads to Postgres** (`booking_leads` table) — saved before
       the email so a lead is never lost; record `email_sent`. — `db.py`,
-      `agents.py`, `main.py` ✅
+      `agents.py`, `main.py`
 - [x] **2b. Production email** — **DECISION (2026-06-16): stay on Gmail SMTP.**
       Lead/consultation volume is low, so Gmail's limits are not a concern and a
       transactional provider isn't warranted. Keep the existing
       `notifications.py` Gmail-SMTP path. Caveats accepted (see below).
-- [x] **2c. Consultation form posts to backend** instead of `mailto:` ✅ — new
+- [x] **2c. Consultation form posts to backend** instead of `mailto:`  — new
       `/api/consultation` endpoint (Turnstile-gated, rate-limited) persists to a
       `consultation_inquiries` table BEFORE emailing the agency; frontend POSTs
       via `fetch` with the bot-check widget. — `main.py`, `db.py`,
       `notifications.py`, `captcha.py`, `script.js`, `index.html`
-- [x] **2d. Replace Calendly placeholder** ✅ — "Open Calendly" now links to
+- [x] **2d. Replace Calendly placeholder**  — "Open Calendly" now links to
       https://calendly.com/horizonvoyages (new tab); removed the `alert()` stub. — `index.html`, `script.js`
-- [x] **2e. Admin view** ✅ — HTTP Basic–protected `/admin` page lists booking
+- [x] **2e. Admin view**  — HTTP Basic–protected `/admin` page lists booking
       leads + consultation inquiries. Separate `ADMIN_USER`/`ADMIN_PASSWORD`
       auth (not the public API key); disabled (503) when unconfigured. — `admin.py`, `db.py`, `main.py`
 
@@ -98,7 +98,7 @@ PCI scope.
 - [ ] **4a. Durable LangGraph checkpointer** — replace `MemorySaver` with a
       Postgres/Redis saver so chat state survives restarts and scales.
 - [ ] **4b. Health-check endpoint** (`/healthz`) for the load balancer.
-- [x] **4c. Config-driven frontend** ✅ — backend URL + public keys moved out of
+- [x] **4c. Config-driven frontend**  — backend URL + public keys moved out of
       `script.js` into `config.js` (`window.APP_CONFIG`), loaded before the app
       and swappable per environment with no rebuild. `script.js` reads it with
       safe fallbacks. — `config.js`, `index.html`, `script.js`
