@@ -35,12 +35,14 @@ MOCK_GDS = [
 @tool
 def search_gds_inventory(region: Optional[str] = None, max_price: Optional[int] = None) -> str:
     """
-    Searches the Global Distribution System (GDS) for available cruise voyages.
+    Searches available cruise voyages that suit the guest's request.
     Args:
         region: The destination region (e.g., 'Caribbean', 'Mediterranean', 'Alaska').
-        max_price: The maximum budget per person.
+        max_price: The guest's approximate per-person budget, used only to narrow
+            which sailings to suggest. Fares are NOT returned — pricing changes
+            until a deposit is placed and is confirmed later by a human advisor.
     Returns:
-        A string formatted list of available voyages.
+        A string formatted list of matching voyages (no pricing).
     """
     results = MOCK_GDS
     
@@ -55,7 +57,7 @@ def search_gds_inventory(region: Optional[str] = None, max_price: Optional[int] 
         
     output = "Found the following sailings:\n"
     for v in results:
-        output += f"- [{v['id']}] {v['nights']} nights in {v['region']} on {v['cruise_line']} {v['ship']} for ${v['price_per_person']}pp (Date: {v['date']})\n"
+        output += f"- [{v['id']}] {v['nights']} nights in {v['region']} on {v['cruise_line']} {v['ship']} (sailing {v['date']})\n"
         
     return output
 
@@ -65,8 +67,7 @@ def get_cruise_details(cruise_id: str) -> Optional[str]:
     if not cruise:
         return None
     return (f"- [{cruise['id']}] {cruise['nights']} nights in {cruise['region']} "
-            f"on {cruise['cruise_line']} {cruise['ship']} for "
-            f"${cruise['price_per_person']}pp (Date: {cruise['date']})")
+            f"on {cruise['cruise_line']} {cruise['ship']} (sailing {cruise['date']})")
 
 
 @tool
