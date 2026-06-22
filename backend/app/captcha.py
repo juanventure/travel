@@ -45,13 +45,18 @@ async def enforce_chat_captcha(session_id: str, token: str | None, request: Requ
     if not TURNSTILE_SECRET:
         return  # bot protection disabled (no secret configured)
 
-    r = get_redis()
     verified_key = f"captcha_ok:{session_id}"
+    # Redis is an optimization (skip re-verifying a known-good session). If it is
+    # unavailable OR misconfigured (e.g. a bad REDIS_URL), fail open: fall through
+    # to verifying the token directly rather than crashing the request.
+    r = None
     try:
+        r = get_redis()
         if await r.get(verified_key):
             return  # this session already passed
-    except Exception as exc:  # noqa: BLE001 - if Redis is down, fall through to verify
-        print(f"[captcha] redis check failed ({exc!r}); verifying token directly.")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[captcha] redis unavailable ({exc!r}); verifying token directly.")
+        r = None
 
     if not token:
         raise HTTPException(
@@ -65,10 +70,11 @@ async def enforce_chat_captcha(session_id: str, token: str | None, request: Requ
             detail="Captcha verification failed.",
         )
 
-    try:
-        await r.set(verified_key, "1", ex=VERIFIED_TTL_SECONDS)
-    except Exception as exc:  # noqa: BLE001
-        print(f"[captcha] failed to cache verified session ({exc!r}).")
+    if r is not None:
+        try:
+            await r.set(verified_key, "1", ex=VERIFIED_TTL_SECONDS)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[captcha] failed to cache verified session ({exc!r}).")
 
 
 async def enforce_form_captcha(token: str | None, request: Request) -> None:
