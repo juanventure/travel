@@ -15,14 +15,15 @@
    switched off the Turnstile test keys, put your real site key here.
 */
 window.APP_CONFIG = {
-  // Backend API base URL (no trailing slash).
-  API_BASE: 'http://localhost:8000',
+  // Backend API base URL (no trailing slash). Production Render service.
+  API_BASE: 'https://horizon-voyages-backend.onrender.com',
 
-  // Public API key sent as the X-API-Key header.
-  API_KEY: 'dev-secret-key-12345',
+  // Public API key sent as the X-API-Key header. Must match API_KEY in Render env.
+  API_KEY: 'hv-prod-bf15b93cb1d1c60a8e5aeac225823ea0',
 
-  // Cloudflare Turnstile SITE key (public). Real widget "Horizon Voyages (local)",
-  // allowed hostname: localhost. Pair with the matching secret key in the backend
-  // (TURNSTILE_SECRET_KEY). The old "always passes" test key was 1x00000000000000000000AA.
+  // Cloudflare Turnstile SITE key (public). Pairs with TURNSTILE_SECRET_KEY in the
+  // backend. NOTE: add the production hostname(s) (the *.pages.dev URL and any
+  // custom domain) to this widget's allowed hostnames in the Cloudflare Turnstile
+  // dashboard, otherwise the bot check fails in production.
   TURNSTILE_SITE_KEY: '0x4AAAAAADmBF37X0IN7DiSp',
 };
