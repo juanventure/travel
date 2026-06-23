@@ -916,6 +916,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   .advisor-credentials { position: static; margin-top: 16px; }
   .consult-form { padding: 20px; }
   .widget-header { padding: 20px; }
+  /* Keep the chat window inside narrow screens (fixed 350px overflowed < ~382px). */
+  .chat-window { width: calc(100vw - 48px); max-width: 350px; }
 }
 
 /* =============================================
