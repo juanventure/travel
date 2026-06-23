@@ -20,17 +20,21 @@ window.addEventListener('scroll', () => {
 // ── Mobile hamburger ──
 const hamburger = document.getElementById('hamburger');
 const navLinks  = document.getElementById('nav-links');
+function setMobileMenu(open) {
+  hamburger.classList.toggle('open', open);
+  navLinks.classList.toggle('mobile-open', open);
+  // `nav-open` on <body> neutralises the navbar's backdrop-filter while the menu
+  // is open. After scrolling, the navbar gains backdrop-filter, which would trap
+  // the menu's position:fixed inside the navbar box (a ~72px sliver) and freeze
+  // the page. See the matching CSS rule.
+  document.body.classList.toggle('nav-open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
 hamburger.addEventListener('click', () => {
-  hamburger.classList.toggle('open');
-  navLinks.classList.toggle('mobile-open');
-  document.body.style.overflow = navLinks.classList.contains('mobile-open') ? 'hidden' : '';
+  setMobileMenu(!navLinks.classList.contains('mobile-open'));
 });
 navLinks.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', () => {
-    hamburger.classList.remove('open');
-    navLinks.classList.remove('mobile-open');
-    document.body.style.overflow = '';
-  });
+  a.addEventListener('click', () => setMobileMenu(false));
 });
 
 // ── Scroll reveal ──
