@@ -113,12 +113,19 @@ document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(
 // ── Smooth anchor scroll ──
 document.querySelectorAll('a[href^="#"]').forEach(link => {
   link.addEventListener('click', e => {
-    const target = document.querySelector(link.getAttribute('href'));
+    const href = link.getAttribute('href');
+    if (!href || href === '#') return; // bare "#" (e.g. the logo) is not a scroll target
+    const target = document.querySelector(href);
     if (!target) return;
     e.preventDefault();
-    const offset = 80;
-    const top = target.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
+    // Defer one frame so that closing the mobile menu (removing the fixed
+    // overlay and releasing the body scroll-lock) settles BEFORE we measure and
+    // scroll. Measuring mid-teardown is what made nav links appear dead on mobile.
+    requestAnimationFrame(() => {
+      const offset = 80;
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
   });
 });
 
