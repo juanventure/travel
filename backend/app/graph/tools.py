@@ -71,12 +71,20 @@ def get_cruise_details(cruise_id: str) -> Optional[str]:
 
 
 @tool
-def submit_booking_lead(full_name: str, email: str, cruise_id: str) -> str:
+def submit_booking_lead(full_name: str, email: str, cruise_id: str,
+                        num_passengers: Optional[str] = None,
+                        cruise_length: Optional[str] = None,
+                        travel_dates: Optional[str] = None) -> str:
     """
     Records a finalized booking lead in the travel agency CRM.
-    MUST be called when the user has provided their name, email, and selected a cruise.
+    MUST be called once the user has provided their name, email, and selected a
+    cruise. Also pass, whenever the user has shared them:
+        num_passengers: how many people are travelling (e.g. '2 adults, 1 child').
+        cruise_length: preferred trip length, e.g. '7 nights' or '10-14 nights'.
+        travel_dates: preferred dates or date range, e.g. 'early June 2026, +/- 3 days'.
     """
     # Records the lead. The agency is notified by email in the booking node so the
     # (blocking) send runs off the event loop and the confirmation can reflect it.
-    print(f"*** NEW BOOKING LEAD: {full_name} ({email}) wants to book {cruise_id} ***")
+    print(f"*** NEW BOOKING LEAD: {full_name} ({email}) wants {cruise_id} | "
+          f"pax={num_passengers} length={cruise_length} dates={travel_dates} ***")
     return f"Booking lead for {full_name} ({email}) on {cruise_id} has been recorded."

@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-from sqlalchemy import String, Integer, Text, Boolean, DateTime, select
+from sqlalchemy import String, Integer, Text, Boolean, DateTime, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
@@ -60,6 +60,9 @@ class BookingLead(Base):
     email: Mapped[str] = mapped_column(String(255))
     cruise_id: Mapped[str] = mapped_column(String(64))
     cruise_details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    num_passengers: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    cruise_length: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    travel_dates: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     session_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     email_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -93,20 +96,35 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def init_db() -> None:
-    """Create tables if they don't exist. Call on startup."""
+    """Create tables if missing, and add newer columns to existing tables."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Lightweight migration: create_all does NOT alter existing tables, so add
+        # columns that post-date the original schema. Idempotent via IF NOT EXISTS.
+        for col, ddl in (
+            ("num_passengers", "VARCHAR(64)"),
+            ("cruise_length", "VARCHAR(64)"),
+            ("travel_dates", "VARCHAR(128)"),
+        ):
+            await conn.execute(
+                text(f"ALTER TABLE booking_leads ADD COLUMN IF NOT EXISTS {col} {ddl}")
+            )
 
 
 async def save_booking_lead(full_name: str, email: str, cruise_id: str,
                             cruise_details: Optional[str] = None,
-                            session_id: Optional[str] = None) -> Optional[int]:
+                            session_id: Optional[str] = None,
+                            num_passengers: Optional[str] = None,
+                            cruise_length: Optional[str] = None,
+                            travel_dates: Optional[str] = None) -> Optional[int]:
     """Insert a lead and return its id, or None if the write failed."""
     try:
         async with AsyncSessionLocal() as session:
             lead = BookingLead(
                 full_name=full_name, email=email, cruise_id=cruise_id,
                 cruise_details=cruise_details, session_id=session_id,
+                num_passengers=num_passengers, cruise_length=cruise_length,
+                travel_dates=travel_dates,
             )
             session.add(lead)
             await session.commit()
