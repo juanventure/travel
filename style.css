@@ -176,6 +176,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 }
 .nav-links a:hover { color: var(--gold); }
 .nav-cta { margin-left: 8px; padding: 10px 22px; font-size: .8rem; }
+/* The in-menu "Book a Consult" item only appears inside the mobile menu
+   (desktop already has the separate .nav-cta button). */
+.nav-cta-mobile { display: none; }
 .hamburger {
   display: none;
   flex-direction: column;
@@ -894,6 +897,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     z-index: 999;
   }
   .nav-links.mobile-open a { font-size: 1.2rem; }
+  .nav-links.mobile-open .nav-cta-mobile { display: block; margin-top: 12px; }
+  .nav-links.mobile-open .nav-cta-mobile a { font-size: 1rem; }
   /* The menu overlay is position:fixed inside the navbar. Once scrolled, the
      navbar gains a backdrop-filter, which makes it the containing block for the
      fixed menu — trapping it in a ~72px sliver and freezing the page. Neutralise
