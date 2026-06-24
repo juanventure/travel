@@ -92,7 +92,17 @@ from app.notifications import send_booking_lead_email
 from app.db import save_booking_lead, mark_lead_emailed
 
 async def booking_node(state: AgentState):
-    sys_msg = SystemMessage(content="You are the secure Booking Agent. Ask the user for their full name, email, and the cruise ID they want. Once you have all three, YOU MUST call the submit_booking_lead tool to finalize the reservation. Do not make up a confirmation number.")
+    sys_msg = SystemMessage(content=(
+        "You are the secure Booking Agent. Gather the details needed to start a "
+        "reservation: the user's full name, email, the cruise ID they want, the "
+        "number of passengers, their preferred cruise length (in nights), and "
+        "their preferred travel dates or date range. Ask for whichever are still "
+        "missing — it's fine to collect them over a few messages, one or two at a "
+        "time. Once you have at least the full name, email, and cruise ID, YOU "
+        "MUST call the submit_booking_lead tool, passing everything you've "
+        "collected (including passengers, cruise length, and travel dates when "
+        "known). Do not make up a confirmation number."
+    ))
     booking_llm = llm.bind_tools([submit_booking_lead])
     response = await booking_llm.ainvoke([sys_msg] + state["messages"])
 
@@ -112,16 +122,24 @@ async def booking_node(state: AgentState):
             full_name = args.get("full_name", "")
             email = args.get("email", "")
             cruise_id = args.get("cruise_id", "")
+            num_passengers = args.get("num_passengers")
+            cruise_length = args.get("cruise_length")
+            travel_dates = args.get("travel_dates")
             details = get_cruise_details(cruise_id)
 
             # 2. Persist the lead BEFORE emailing, so it is never lost even if the
             #    email fails. Soft-fails (returns None) if the DB is unavailable.
-            lead_id = await save_booking_lead(full_name, email, cruise_id, details)
+            lead_id = await save_booking_lead(
+                full_name, email, cruise_id, details,
+                num_passengers=num_passengers, cruise_length=cruise_length,
+                travel_dates=travel_dates,
+            )
 
             # 3. Notify the agency by email, OFF the event loop so the blocking
             #    SMTP call doesn't stall this (or any other) request.
             sent = await asyncio.to_thread(
                 send_booking_lead_email, full_name, email, cruise_id, details,
+                num_passengers, cruise_length, travel_dates,
             )
             await mark_lead_emailed(lead_id, sent)
 

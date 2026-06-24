@@ -22,7 +22,10 @@ from typing import Optional
 
 
 def send_booking_lead_email(full_name: str, email: str, cruise_id: str,
-                            cruise_details: Optional[str] = None) -> bool:
+                            cruise_details: Optional[str] = None,
+                            num_passengers: Optional[str] = None,
+                            cruise_length: Optional[str] = None,
+                            travel_dates: Optional[str] = None) -> bool:
     """
     Email a new booking lead to the agency. Returns True if the email was sent,
     False if it was skipped (not configured) or failed (error is logged).
@@ -45,9 +48,12 @@ def send_booking_lead_email(full_name: str, email: str, cruise_id: str,
     msg["Reply-To"] = email  # so the advisor can reply straight to the customer
     body = (
         "A new booking lead was submitted through the Horizon Voyages AI assistant.\n\n"
-        f"Name:   {full_name}\n"
-        f"Email:  {email}\n"
-        f"Cruise: {cruise_id}\n"
+        f"Name:          {full_name}\n"
+        f"Email:         {email}\n"
+        f"Cruise:        {cruise_id}\n"
+        f"Passengers:    {num_passengers or '—'}\n"
+        f"Cruise length: {cruise_length or '—'}\n"
+        f"Travel dates:  {travel_dates or '—'}\n"
     )
     if cruise_details:
         body += f"\nVoyage details:\n{cruise_details}\n"
