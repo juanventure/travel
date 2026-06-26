@@ -214,3 +214,34 @@ def send_callback_sms(name: str, phone: str, trip_summary: Optional[str] = None)
         print(f"[notifications] Twilio SMS error: {exc!r}")
     print(f"[notifications] Callback SMS sent to {sent}/{len(numbers)} advisor(s)")
     return sent
+
+
+def send_callback_telegram(name: str, phone: str, trip_summary: Optional[str] = None) -> bool:
+    """
+    Post a callback alert to the advisor team's Telegram group. Returns True if
+    sent. No-op (returns False) unless TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are
+    both set. Free + instant; no carrier verification required.
+    """
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if not (token and chat_id):
+        print("[notifications] Telegram not configured; skipping callback alert.")
+        return False
+
+    text = (f"Callback requested\n"
+            f"Name:  {name}\n"
+            f"Phone: {phone}\n"
+            f"Trip:  {trip_summary or '-'}\n"
+            f"Call within ~15 min.")
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    try:
+        with httpx.Client(timeout=15) as client:
+            resp = client.post(url, json={"chat_id": chat_id, "text": text})
+        if resp.status_code == 200:
+            print("[notifications] Callback Telegram alert sent")
+            return True
+        print(f"[notifications] Telegram failed: {resp.status_code} {resp.text[:200]}")
+        return False
+    except Exception as exc:  # noqa: BLE001
+        print(f"[notifications] Telegram error: {exc!r}")
+        return False
