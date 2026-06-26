@@ -20,6 +20,8 @@ import ssl
 from email.message import EmailMessage
 from typing import Optional
 
+import httpx
+
 
 def send_booking_lead_email(full_name: str, email: str, cruise_id: str,
                             cruise_details: Optional[str] = None,
@@ -128,3 +130,87 @@ def send_consultation_email(first_name: str, last_name: str, email: str,
     except Exception as exc:  # noqa: BLE001 - log and degrade, never break submit
         print(f"[notifications] Failed to send consultation email: {exc!r}")
         return False
+
+
+def _callback_recipients() -> list[str]:
+    """Advisor emails for callback alerts (ADVISOR_EMAILS, else the lead inbox)."""
+    raw = os.getenv("ADVISOR_EMAILS") or os.getenv(
+        "LEAD_NOTIFICATION_EMAIL", "juanventure@gmail.com")
+    return [e.strip() for e in raw.split(",") if e.strip()]
+
+
+def send_callback_email(name: str, phone: str, trip_summary: Optional[str] = None,
+                        urgent: bool = True) -> bool:
+    """
+    Email the advisor team that a customer requested a callback. Returns True if
+    sent, False if skipped (not configured) or failed.
+    """
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_APP_PASSWORD")
+    if not smtp_user or not smtp_password:
+        print("[notifications] SMTP not configured; skipping callback email.")
+        return False
+
+    host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.getenv("SMTP_PORT", "465"))
+    recipients = _callback_recipients()
+
+    msg = EmailMessage()
+    flag = "CALL NOW" if urgent else "Callback (after hours)"
+    msg["Subject"] = f"[{flag}] Callback requested: {name} — {phone}"
+    msg["From"] = smtp_user
+    msg["To"] = ", ".join(recipients)
+    body = (
+        "A customer asked an advisor to call them.\n\n"
+        f"Name:  {name}\n"
+        f"Phone: {phone}\n"
+        f"Trip:  {trip_summary or '—'}\n\n"
+    )
+    body += ("Call them within ~15 minutes." if urgent
+             else "Outside business hours — follow up first thing.")
+    msg.set_content(body)
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        print(f"[notifications] Callback email sent to {recipients}")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        print(f"[notifications] Failed to send callback email: {exc!r}")
+        return False
+
+
+def send_callback_sms(name: str, phone: str, trip_summary: Optional[str] = None) -> int:
+    """
+    Text each advisor (ADVISOR_SMS_NUMBERS) via Twilio that a callback is waiting.
+    Returns the number of messages sent. No-op (returns 0) unless TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, and ADVISOR_SMS_NUMBERS are all set.
+    """
+    sid = os.getenv("TWILIO_ACCOUNT_SID")
+    token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_FROM_NUMBER")
+    numbers = [n.strip() for n in os.getenv("ADVISOR_SMS_NUMBERS", "").split(",") if n.strip()]
+    if not (sid and token and from_number and numbers):
+        print("[notifications] Twilio not configured; skipping callback SMS.")
+        return 0
+
+    text = (f"Horizon Voyages — callback requested: {name} at {phone}. "
+            f"{trip_summary or ''} Call within ~15 min.").strip()
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
+    sent = 0
+    try:
+        with httpx.Client(timeout=15) as client:
+            for to in numbers:
+                resp = client.post(url, auth=(sid, token),
+                                   data={"To": to, "From": from_number, "Body": text})
+                if resp.status_code in (200, 201):
+                    sent += 1
+                else:
+                    print(f"[notifications] Twilio SMS to {to} failed: "
+                          f"{resp.status_code} {resp.text[:200]}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[notifications] Twilio SMS error: {exc!r}")
+    print(f"[notifications] Callback SMS sent to {sent}/{len(numbers)} advisor(s)")
+    return sent

@@ -26,6 +26,15 @@ class ConsultationResponse(BaseModel):
     success: bool
     message: str
 
+class CallbackRequest(BaseModel):
+    name: str
+    phone: str
+    # Free-text trip summary the AI assembled (cruise, passengers, length, dates).
+    trip_summary: Optional[str] = None
+    session_id: Optional[str] = None
+    # Cloudflare Turnstile token (required when bot protection is enabled).
+    captcha_token: Optional[str] = None
+
 class BookingStatusResponse(BaseModel):
     booking_id: str
     status: str
