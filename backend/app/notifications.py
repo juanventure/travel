@@ -76,6 +76,9 @@ def send_consultation_email(first_name: str, last_name: str, email: str,
                             phone: Optional[str] = None,
                             destination: Optional[str] = None,
                             budget: Optional[str] = None,
+                            num_passengers: Optional[str] = None,
+                            cruise_length: Optional[str] = None,
+                            travel_dates: Optional[str] = None,
                             message: Optional[str] = None) -> bool:
     """
     Email a new consultation inquiry to the agency. Returns True if sent, False
@@ -101,11 +104,14 @@ def send_consultation_email(first_name: str, last_name: str, email: str,
     msg["Reply-To"] = email  # so the advisor can reply straight to the customer
     body = (
         "A new consultation request was submitted through the Horizon Voyages site.\n\n"
-        f"Name:        {full_name}\n"
-        f"Email:       {email}\n"
-        f"Phone:       {phone or '—'}\n"
-        f"Destination: {destination or '—'}\n"
-        f"Budget:      {budget or '—'}\n"
+        f"Name:          {full_name}\n"
+        f"Email:         {email}\n"
+        f"Phone:         {phone or '—'}\n"
+        f"Destination:   {destination or '—'}\n"
+        f"Budget:        {budget or '—'}\n"
+        f"Passengers:    {num_passengers or '—'}\n"
+        f"Cruise length: {cruise_length or '—'}\n"
+        f"Travel dates:  {travel_dates or '—'}\n"
     )
     if message:
         body += f"\nMessage:\n{message}\n"

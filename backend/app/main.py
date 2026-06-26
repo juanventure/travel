@@ -88,14 +88,18 @@ async def consultation(request: ConsultationRequest, http_request: Request,
     inquiry_id = await save_consultation(
         first_name=request.fname, last_name=request.lname, email=request.email,
         phone=request.phone, destination=request.destination,
-        budget=request.budget, message=request.message,
+        budget=request.budget, num_passengers=request.num_passengers,
+        cruise_length=request.cruise_length, travel_dates=request.travel_dates,
+        message=request.message,
     )
 
     # Email off the event loop so the blocking SMTP call doesn't stall the request.
     sent = await asyncio.to_thread(
         send_consultation_email,
         request.fname, request.lname, request.email,
-        request.phone, request.destination, request.budget, request.message,
+        request.phone, request.destination, request.budget,
+        request.num_passengers, request.cruise_length, request.travel_dates,
+        request.message,
     )
     await mark_consultation_emailed(inquiry_id, sent)
 

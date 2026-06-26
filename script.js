@@ -203,6 +203,9 @@ if (form) {
       phone: formData.get('phone'),
       destination: formData.get('destination'),
       budget: formData.get('budget'),
+      num_passengers: formData.get('passengers'),
+      cruise_length: formData.get('length'),
+      travel_dates: formData.get('dates'),
       message: formData.get('message'),
       captcha_token: consultCaptchaToken,
     };
