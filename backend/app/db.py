@@ -90,6 +90,21 @@ class ConsultationInquiry(Base):
     )
 
 
+class CallbackRequest(Base):
+    __tablename__ = "callback_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(64))
+    trip_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    session_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="requested")
+    notified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
 # pool_pre_ping + a modest recycle keep connections healthy against serverless
 # Postgres (e.g. Neon) that may drop idle connections / auto-suspend.
 engine = create_async_engine(
@@ -222,3 +237,51 @@ async def mark_consultation_emailed(inquiry_id: Optional[int], sent: bool) -> No
                 await session.commit()
     except Exception as exc:  # noqa: BLE001
         print(f"[db] failed to update inquiry #{inquiry_id}: {exc!r}")
+
+
+async def save_callback_request(name: str, phone: str,
+                                trip_summary: Optional[str] = None,
+                                session_id: Optional[str] = None) -> Optional[int]:
+    """Insert a callback request and return its id, or None if the write failed."""
+    try:
+        async with AsyncSessionLocal() as session:
+            req = CallbackRequest(
+                name=name, phone=phone, trip_summary=trip_summary, session_id=session_id,
+            )
+            session.add(req)
+            await session.commit()
+            await session.refresh(req)
+            print(f"[db] saved callback request #{req.id} ({name}, {phone})")
+            return req.id
+    except Exception as exc:  # noqa: BLE001 - never block a request on DB errors
+        print(f"[db] failed to save callback request: {exc!r}")
+        return None
+
+
+async def mark_callback_notified(req_id: Optional[int], notified: bool) -> None:
+    """Update whether the team was notified for a callback request."""
+    if req_id is None:
+        return
+    try:
+        async with AsyncSessionLocal() as session:
+            req = await session.get(CallbackRequest, req_id)
+            if req is not None:
+                req.notified = notified
+                await session.commit()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to update callback #{req_id}: {exc!r}")
+
+
+async def list_callback_requests(limit: int = 500) -> list["CallbackRequest"]:
+    """Return recent callback requests (newest first). Empty list on DB error."""
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(CallbackRequest)
+                .order_by(CallbackRequest.created_at.desc())
+                .limit(limit)
+            )
+            return list(result.scalars().all())
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to list callback requests: {exc!r}")
+        return []

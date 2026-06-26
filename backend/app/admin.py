@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from app.db import list_booking_leads, list_consultations
+from app.db import list_booking_leads, list_consultations, list_callback_requests
 from app.ratelimit import rate_limiter
 
 router = APIRouter()
@@ -93,6 +93,14 @@ _STYLE = """
 async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
     leads = await list_booking_leads()
     inquiries = await list_consultations()
+    callbacks = await list_callback_requests()
+
+    callbacks_table = _table(
+        "Callback requests",
+        ["ID", "Name", "Phone", "Trip", "Notified", "Created"],
+        [[c.id, c.name, c.phone, c.trip_summary, c.notified, c.created_at]
+         for c in callbacks],
+    )
 
     leads_table = _table(
         "Booking leads",
@@ -118,6 +126,6 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
         f"<title>Horizon Voyages — Admin</title><style>{_STYLE}</style></head><body>"
         f"<h1>Horizon Voyages — Admin</h1>"
         f"<p class='sub'>Captured leads and consultation inquiries.</p>"
-        f"{leads_table}{inquiries_table}</body></html>"
+        f"{callbacks_table}{leads_table}{inquiries_table}</body></html>"
     )
     return HTMLResponse(content=page)

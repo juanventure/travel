@@ -1,21 +1,37 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from app.models import (
     ChatRequest, BookingStatusResponse, ExecuteBookingRequest, ExecuteBookingResponse,
-    ConsultationRequest, ConsultationResponse,
+    ConsultationRequest, ConsultationResponse, CallbackRequest,
 )
 from app.security import get_api_key
 from app.agent_wrapper import simulate_agent_thought_process, check_booking_status, execute_final_booking
 from app.ratelimit import rate_limiter
 from app.captcha import enforce_chat_captcha, enforce_form_captcha
-from app.notifications import send_consultation_email
+from app.notifications import send_consultation_email, send_callback_email, send_callback_sms
 from app.admin import router as admin_router
-from app.db import init_db, save_consultation, mark_consultation_emailed
+from app.db import (
+    init_db, save_consultation, mark_consultation_emailed,
+    save_callback_request, mark_callback_notified,
+)
+
+# Advisor live-callback hours (Central). Outside these, the site offers
+# self-scheduling instead of promising an immediate call.
+_CENTRAL = ZoneInfo("America/Chicago")
+CALLBACK_OPEN = time(9, 30)
+CALLBACK_CLOSE = time(20, 30)
+
+
+def within_business_hours() -> bool:
+    now = datetime.now(_CENTRAL).time()
+    return CALLBACK_OPEN <= now <= CALLBACK_CLOSE
 
 # Per-IP request caps (per minute). Override via env.
 CHAT_RATE_LIMIT = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "20"))
@@ -107,6 +123,43 @@ async def consultation(request: ConsultationRequest, http_request: Request,
         success=True,
         message="Thanks! Your consultation request has been received.",
     )
+
+
+@app.post("/api/callback-request", response_model=ConsultationResponse,
+          dependencies=[Depends(rate_limiter(CONSULTATION_RATE_LIMIT, "callback"))])
+async def callback_request(request: CallbackRequest, http_request: Request,
+                           api_key: str = Depends(get_api_key)):
+    """
+    A customer asks an advisor to call them. Bot-check, persist, then alert the
+    team — email always, plus SMS (Twilio) during business hours. Outside hours we
+    still capture it but don't promise an immediate call.
+    """
+    await enforce_form_captcha(request.captcha_token, http_request)
+
+    req_id = await save_callback_request(
+        name=request.name, phone=request.phone,
+        trip_summary=request.trip_summary, session_id=request.session_id,
+    )
+
+    open_now = within_business_hours()
+    # Email off the event loop (blocking SMTP); SMS only during business hours.
+    email_ok = await asyncio.to_thread(
+        send_callback_email, request.name, request.phone, request.trip_summary, open_now,
+    )
+    sms_sent = 0
+    if open_now:
+        sms_sent = await asyncio.to_thread(
+            send_callback_sms, request.name, request.phone, request.trip_summary,
+        )
+    await mark_callback_notified(req_id, bool(email_ok or sms_sent))
+
+    if open_now:
+        message = ("You're all set — an advisor will call you shortly. "
+                   "Your trip details are already with them.")
+    else:
+        message = ("Our advisors are available 9:30am–8:30pm Central. We've saved "
+                   "your request and will call you first thing.")
+    return ConsultationResponse(success=True, message=message)
 
 
 @app.get("/api/booking-status/{booking_id}", response_model=BookingStatusResponse)
