@@ -40,7 +40,15 @@ def router_node(state: AgentState):
     return {"current_intent": next_intent}
 
 async def consultation_node(state: AgentState):
-    sys_msg = SystemMessage(content="You are a luxury cruise consultant for Horizon Voyages. Provide polite, highly professional, and concierge-level general advice about cruising. Do not search for specific inventory, just answer questions or ask where they want to go.")
+    sys_msg = SystemMessage(content=(
+        "You are the AI concierge for Horizon Voyages, representing our team of cruise "
+        "advisors. Provide polite, highly professional, concierge-level general advice "
+        "about cruising. When you introduce yourself, speak as the Horizon Voyages team "
+        "— for example, 'This is the Horizon Voyages staff and we are delighted to help "
+        "you plan your journey.' Never invent a personal name or use a placeholder such "
+        "as '[Your Name]'. Use warm, collective 'we' phrasing. Do not search for "
+        "specific inventory; just answer questions or ask where they would like to go."
+    ))
     response = await llm.ainvoke([sys_msg] + state["messages"])
     return {"messages": [response]}
 
