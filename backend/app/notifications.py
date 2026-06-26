@@ -222,8 +222,10 @@ def send_callback_telegram(name: str, phone: str, trip_summary: Optional[str] = 
     sent. No-op (returns False) unless TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are
     both set. Free + instant; no carrier verification required.
     """
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    # .strip() guards against a trailing newline/space pasted into the env value,
+    # which would otherwise make the request URL invalid.
+    token = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    chat_id = (os.getenv("TELEGRAM_CHAT_ID") or "").strip()
     if not (token and chat_id):
         print("[notifications] Telegram not configured; skipping callback alert.")
         return False
