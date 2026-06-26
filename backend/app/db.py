@@ -80,6 +80,9 @@ class ConsultationInquiry(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     destination: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     budget: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    num_passengers: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    cruise_length: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    travel_dates: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -101,14 +104,16 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
         # Lightweight migration: create_all does NOT alter existing tables, so add
         # columns that post-date the original schema. Idempotent via IF NOT EXISTS.
-        for col, ddl in (
+        new_cols = (
             ("num_passengers", "VARCHAR(64)"),
             ("cruise_length", "VARCHAR(64)"),
             ("travel_dates", "VARCHAR(128)"),
-        ):
-            await conn.execute(
-                text(f"ALTER TABLE booking_leads ADD COLUMN IF NOT EXISTS {col} {ddl}")
-            )
+        )
+        for table_name in ("booking_leads", "consultation_inquiries"):
+            for col, ddl in new_cols:
+                await conn.execute(
+                    text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col} {ddl}")
+                )
 
 
 async def save_booking_lead(full_name: str, email: str, cruise_id: str,
@@ -182,13 +187,18 @@ async def save_consultation(first_name: str, last_name: str, email: str,
                             phone: Optional[str] = None,
                             destination: Optional[str] = None,
                             budget: Optional[str] = None,
+                            num_passengers: Optional[str] = None,
+                            cruise_length: Optional[str] = None,
+                            travel_dates: Optional[str] = None,
                             message: Optional[str] = None) -> Optional[int]:
     """Insert a consultation inquiry and return its id, or None if the write failed."""
     try:
         async with AsyncSessionLocal() as session:
             inquiry = ConsultationInquiry(
                 first_name=first_name, last_name=last_name, email=email,
-                phone=phone, destination=destination, budget=budget, message=message,
+                phone=phone, destination=destination, budget=budget,
+                num_passengers=num_passengers, cruise_length=cruise_length,
+                travel_dates=travel_dates, message=message,
             )
             session.add(inquiry)
             await session.commit()

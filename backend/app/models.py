@@ -15,6 +15,9 @@ class ConsultationRequest(BaseModel):
     phone: Optional[str] = None
     destination: Optional[str] = None
     budget: Optional[str] = None
+    num_passengers: Optional[str] = None
+    cruise_length: Optional[str] = None
+    travel_dates: Optional[str] = None
     message: Optional[str] = None
     # Cloudflare Turnstile token (required when bot protection is enabled).
     captcha_token: Optional[str] = None

@@ -104,10 +104,11 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
     )
     inquiries_table = _table(
         "Consultation inquiries",
-        ["ID", "Name", "Email", "Phone", "Destination", "Budget", "Message",
-         "Emailed", "Created"],
+        ["ID", "Name", "Email", "Phone", "Destination", "Budget", "Passengers",
+         "Length", "Dates", "Message", "Emailed", "Created"],
         [[i.id, f"{i.first_name} {i.last_name}".strip(), i.email, i.phone,
-          i.destination, i.budget, i.message, i.email_sent, i.created_at]
+          i.destination, i.budget, i.num_passengers, i.cruise_length,
+          i.travel_dates, i.message, i.email_sent, i.created_at]
          for i in inquiries],
     )
 
