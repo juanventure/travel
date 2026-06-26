@@ -15,7 +15,10 @@ from app.security import get_api_key
 from app.agent_wrapper import simulate_agent_thought_process, check_booking_status, execute_final_booking
 from app.ratelimit import rate_limiter
 from app.captcha import enforce_chat_captcha, enforce_form_captcha
-from app.notifications import send_consultation_email, send_callback_email, send_callback_sms
+from app.notifications import (
+    send_consultation_email, send_callback_email, send_callback_sms,
+    send_callback_telegram,
+)
 from app.admin import router as admin_router
 from app.db import (
     init_db, save_consultation, mark_consultation_emailed,
@@ -147,11 +150,15 @@ async def callback_request(request: CallbackRequest, http_request: Request,
         send_callback_email, request.name, request.phone, request.trip_summary, open_now,
     )
     sms_sent = 0
+    tg_ok = False
     if open_now:
         sms_sent = await asyncio.to_thread(
             send_callback_sms, request.name, request.phone, request.trip_summary,
         )
-    await mark_callback_notified(req_id, bool(email_ok or sms_sent))
+        tg_ok = await asyncio.to_thread(
+            send_callback_telegram, request.name, request.phone, request.trip_summary,
+        )
+    await mark_callback_notified(req_id, bool(email_ok or sms_sent or tg_ok))
 
     if open_now:
         message = ("You're all set — an advisor will call you shortly. "
