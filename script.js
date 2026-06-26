@@ -430,15 +430,16 @@ if (chatToggle && chatWindow) {
           .map(e => e.textContent.trim()).filter(Boolean);
         // Grab a valid Turnstile token at submit time (widgets share the site key,
         // so the backend accepts it); fall back to the chat's stored token.
-        let cbToken = captchaToken || '';
+        let cbToken = '';
         try {
           if (window.turnstile) {
-            const t = captchaWidgetId !== null
-              ? window.turnstile.getResponse(captchaWidgetId)
-              : window.turnstile.getResponse();
-            if (t) cbToken = t;
+            if (captchaWidgetId !== null) cbToken = window.turnstile.getResponse(captchaWidgetId) || '';
+            // If the chat widget hasn't solved yet, fall back to any solved widget
+            // on the page (they share the site key, so the backend accepts it).
+            if (!cbToken) cbToken = window.turnstile.getResponse() || '';
           }
-        } catch (e) { /* fall back to captchaToken */ }
+        } catch (e) { /* fall through */ }
+        if (!cbToken) cbToken = captchaToken || '';
         try {
           const resp = await fetch(`${API_BASE}/api/callback-request`, {
             method: 'POST',
