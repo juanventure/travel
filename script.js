@@ -294,7 +294,10 @@ if (chatToggle && chatWindow) {
   }
 
   function renderCaptcha() {
-    if (captchaWidgetId !== null || !window.turnstile || !captchaEl) return;
+    if (captchaWidgetId !== null || !captchaEl) return;
+    // Turnstile's script loads async; if it isn't ready yet, retry shortly so the
+    // widget always renders (otherwise the chat + callback have no token).
+    if (!window.turnstile) { setTimeout(renderCaptcha, 300); return; }
     captchaWidgetId = window.turnstile.render(captchaEl, {
       sitekey: TURNSTILE_SITE_KEY,
       callback: (token) => {
@@ -425,6 +428,17 @@ if (chatToggle && chatWindow) {
         submitB.textContent = 'Requesting…';
         const userMsgs = [...chatMessages.querySelectorAll('.user-msg .msg-content')]
           .map(e => e.textContent.trim()).filter(Boolean);
+        // Grab a valid Turnstile token at submit time (widgets share the site key,
+        // so the backend accepts it); fall back to the chat's stored token.
+        let cbToken = captchaToken || '';
+        try {
+          if (window.turnstile) {
+            const t = captchaWidgetId !== null
+              ? window.turnstile.getResponse(captchaWidgetId)
+              : window.turnstile.getResponse();
+            if (t) cbToken = t;
+          }
+        } catch (e) { /* fall back to captchaToken */ }
         try {
           const resp = await fetch(`${API_BASE}/api/callback-request`, {
             method: 'POST',
@@ -433,7 +447,7 @@ if (chatToggle && chatWindow) {
               name, phone,
               trip_summary: userMsgs.join(' | ').slice(0, 1000),
               session_id: chatClient.sessionId,
-              captcha_token: captchaToken,
+              captcha_token: cbToken,
             }),
           });
           const data = await resp.json().catch(() => ({}));
