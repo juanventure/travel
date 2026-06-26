@@ -313,6 +313,7 @@ if (chatToggle && chatWindow) {
     if (!chatWindow.hidden) {
       chatInput.focus();
       renderCaptcha(); // render lazily the first time the chat opens
+      maybeShowCallbackBar(); // offer a live advisor during business hours
     }
   });
 
@@ -368,4 +369,85 @@ if (chatToggle && chatWindow) {
       }
     }
   });
+
+  // ── Live advisor callback (business hours: 9:30am–8:30pm Central) ──
+  const callbackBar = document.getElementById('chat-callback');
+  const callbackBtn = document.getElementById('chat-callback-btn');
+  let callbackHandled = false;
+
+  function ctMinutesNow() {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago', hour: 'numeric', minute: 'numeric', hour12: false,
+    }).formatToParts(new Date());
+    let h = 0, m = 0;
+    parts.forEach(p => {
+      if (p.type === 'hour') h = (+p.value) % 24;
+      if (p.type === 'minute') m = +p.value;
+    });
+    return h * 60 + m;
+  }
+  const withinAdvisorHours = () => { const t = ctMinutesNow(); return t >= 570 && t <= 1230; };
+
+  function maybeShowCallbackBar() {
+    if (callbackBar && !callbackHandled) callbackBar.hidden = !withinAdvisorHours();
+  }
+
+  if (callbackBtn) {
+    callbackBtn.addEventListener('click', () => {
+      if (callbackHandled) return;
+      callbackHandled = true;
+      callbackBar.hidden = true;
+
+      const wrap = appendMessage('', 'ai-msg');
+      wrap.querySelector('.msg-content').innerHTML =
+        '<p style="margin:0 0 8px">Share your name and number — an advisor will call you shortly.</p>' +
+        '<input type="text" class="cb-name" placeholder="Your name" />' +
+        '<input type="tel" class="cb-phone" placeholder="Best phone number" />' +
+        '<button type="button" class="cb-submit">Request my call</button>' +
+        '<p class="cb-error" hidden></p>';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      const nameI = wrap.querySelector('.cb-name');
+      const phoneI = wrap.querySelector('.cb-phone');
+      const submitB = wrap.querySelector('.cb-submit');
+      const errP = wrap.querySelector('.cb-error');
+
+      submitB.addEventListener('click', async () => {
+        const name = nameI.value.trim();
+        const phone = phoneI.value.trim();
+        if (!name || phone.replace(/\D/g, '').length < 7) {
+          errP.textContent = 'Please enter your name and a valid phone number.';
+          errP.hidden = false;
+          return;
+        }
+        errP.hidden = true;
+        submitB.disabled = true;
+        submitB.textContent = 'Requesting…';
+        const userMsgs = [...chatMessages.querySelectorAll('.user-msg .msg-content')]
+          .map(e => e.textContent.trim()).filter(Boolean);
+        try {
+          const resp = await fetch(`${API_BASE}/api/callback-request`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+            body: JSON.stringify({
+              name, phone,
+              trip_summary: userMsgs.join(' | ').slice(0, 1000),
+              session_id: chatClient.sessionId,
+              captcha_token: captchaToken,
+            }),
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) throw new Error('API ' + resp.status);
+          wrap.querySelector('.msg-content').textContent =
+            data.message || "You're all set — an advisor will call you shortly.";
+        } catch (err) {
+          console.error(err);
+          submitB.disabled = false;
+          submitB.textContent = 'Request my call';
+          errP.textContent = 'Sorry, something went wrong. Please try again.';
+          errP.hidden = false;
+        }
+      });
+    });
+  }
 }

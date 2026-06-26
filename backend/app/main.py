@@ -134,10 +134,13 @@ async def callback_request(request: CallbackRequest, http_request: Request,
                            api_key: str = Depends(get_api_key)):
     """
     A customer asks an advisor to call them. Bot-check, persist, then alert the
-    team — email always, plus SMS (Twilio) during business hours. Outside hours we
-    still capture it but don't promise an immediate call.
+    team — email always, plus instant channels (Telegram/SMS) during business
+    hours. Outside hours we still capture it but don't promise an immediate call.
     """
-    await enforce_form_captcha(request.captcha_token, http_request)
+    # The callback happens inside the chat, so reuse the chat session's bot-check:
+    # a verified session passes even after its one-time token was consumed.
+    await enforce_chat_captcha(
+        request.session_id or "callback", request.captcha_token, http_request)
 
     req_id = await save_callback_request(
         name=request.name, phone=request.phone,
