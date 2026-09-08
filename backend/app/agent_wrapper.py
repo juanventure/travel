@@ -90,27 +90,7 @@ async def simulate_agent_thought_process(session_id: str, message: str) -> Async
 
     yield "data: [DONE]\n\n"
 
-async def check_booking_status(booking_id: str) -> dict:
-    """
-    Simulates checking a long-running GDS booking task.
-    """
-    return {
-        "booking_id": booking_id,
-        "status": "completed",
-        "details": {
-            "cruise_line": "Celebrity Cruises",
-            "ship": "Edge",
-            "sail_date": "2026-05-15"
-        }
-    }
-
-async def execute_final_booking(session_id: str, booking_id: str, payment_token: str) -> dict:
-    """
-    Simulates the host_agency_booking_agent securing the booking securely.
-    """
-    # In a real scenario, this connects to Stripe and the GDS system
-    return {
-        "success": True,
-        "confirmation_code": f"CONF-{booking_id[:6].upper()}",
-        "message": "Booking successful and secured."
-    }
+# check_booking_status() and execute_final_booking() were removed (2026-09-08)
+# along with the endpoints that called them. They returned fabricated
+# confirmation codes, and we do not take payment for cruises — the guest pays
+# the cruise line directly. See the note in app/main.py.

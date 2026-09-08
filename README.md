@@ -88,4 +88,6 @@ Create a new Task Definition in ECS using Fargate.
 
 1. **ALB Security**: The ALB sits in a public subnet, but the ECS tasks sit in a private subnet. Only the ALB can reach the ECS tasks.
 2. **CORS Restrictions**: In `backend/app/main.py`, update the `allow_origins` array to ONLY include the production frontend domain (e.g., `https://www.horizonvoyages.com`).
-3. **API Key Rotation**: The frontend `CruiseChatClient.js` must inject the API key. Keep this key rotated and monitor logs for abuse. For a truly public consumer-facing widget without user-auth, implement rate-limiting via Redis and consider recaptcha validation on the `/execute-booking` endpoint.
+3. **API Key Rotation**: The frontend `CruiseChatClient.js` must inject the API key. Keep this key rotated and monitor logs for abuse. Redis-backed per-IP rate limiting and a Cloudflare Turnstile bot check now guard the public endpoints (`/api/cruise-chat`, `/api/consultation`, `/api/callback-request`).
+
+> **Note (2026-09-08):** `/api/execute-booking` and `/api/booking-status` have been removed. Horizon Voyages operates under a host agency and never collects cruise payment — guests pay the cruise line directly. Self-serve booking is handled by Partner Booking Links; see `docs/production-readiness-plan.md`.

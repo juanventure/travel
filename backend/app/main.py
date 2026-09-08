@@ -8,11 +8,10 @@ from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from app.models import (
-    ChatRequest, BookingStatusResponse, ExecuteBookingRequest, ExecuteBookingResponse,
-    ConsultationRequest, ConsultationResponse, CallbackRequest,
+    ChatRequest, ConsultationRequest, ConsultationResponse, CallbackRequest,
 )
 from app.security import get_api_key
-from app.agent_wrapper import simulate_agent_thought_process, check_booking_status, execute_final_booking
+from app.agent_wrapper import simulate_agent_thought_process
 from app.ratelimit import rate_limiter
 from app.captcha import enforce_chat_captcha, enforce_form_captcha
 from app.notifications import (
@@ -38,7 +37,6 @@ def within_business_hours() -> bool:
 
 # Per-IP request caps (per minute). Override via env.
 CHAT_RATE_LIMIT = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "20"))
-BOOKING_RATE_LIMIT = int(os.getenv("BOOKING_RATE_LIMIT_PER_MINUTE", "10"))
 CONSULTATION_RATE_LIMIT = int(os.getenv("CONSULTATION_RATE_LIMIT_PER_MINUTE", "5"))
 
 # Comma-separated list of allowed browser origins. Default "*" for dev; set to
@@ -172,23 +170,16 @@ async def callback_request(request: CallbackRequest, http_request: Request,
     return ConsultationResponse(success=True, message=message)
 
 
-@app.get("/api/booking-status/{booking_id}", response_model=BookingStatusResponse)
-async def get_booking_status(booking_id: str, api_key: str = Depends(get_api_key)):
-    """
-    Polls for long-running agent tasks (e.g., GDS search).
-    """
-    status_data = await check_booking_status(booking_id)
-    return BookingStatusResponse(**status_data)
-
-@app.post("/api/execute-booking", response_model=ExecuteBookingResponse,
-          dependencies=[Depends(rate_limiter(BOOKING_RATE_LIMIT, "booking"))])
-async def execute_booking(request: ExecuteBookingRequest, api_key: str = Depends(get_api_key)):
-    """
-    Securely handles payment and final commit.
-    """
-    result = await execute_final_booking(
-        session_id=request.session_id,
-        booking_id=request.booking_id,
-        payment_token=request.payment_token
-    )
-    return ExecuteBookingResponse(**result)
+# NOTE: /api/booking-status and /api/execute-booking were removed (2026-09-08).
+#
+# They were stubs that returned fabricated confirmation codes from a public
+# endpoint, and the payment flow they anticipated is not one this business can
+# legally run. As a host-agency (Fora) advisor, Horizon Voyages is not the
+# merchant of record for a cruise: the guest pays the cruise line directly, and
+# commission flows back through the host's IATA number. Taking cruise fare into
+# our own payment processor would make us a seller of travel (registration and
+# trust-accounting obligations in CA/FL/WA/HI) and would earn no commission.
+#
+# Self-serve booking is instead handled by sending the guest to the cruise
+# line's own booking page through an agency-attributed Partner Booking Link.
+# See docs/production-readiness-plan.md Phase 3.

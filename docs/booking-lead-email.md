@@ -11,7 +11,10 @@ to configure and operate it, and a roadmap to make it production-grade.
 
 When a user completes a booking in the AI chat, the `submit_booking_lead` tool
 must deliver the lead (customer name, email, chosen cruise) to the agency inbox
-(`juanventure@gmail.com`) so a human advisor can follow up with a payment link.
+(`juanventure@gmail.com`) so a human advisor can follow up with current pricing
+and cabin options. (Updated 2026-09-08: the advisor does **not** send a payment
+link — Horizon Voyages takes no payment. The guest pays the cruise line
+directly. See `docs/production-readiness-plan.md`.)
 
 Previously the tool only did `print(...)` to stdout — nobody was notified. The
 hardcoded chat confirmation ("…notified our travel advisors…") was therefore
@@ -125,8 +128,10 @@ Ordered by value/effort:
    becomes a notification, the DB the source of truth.
 4. **Retries / dead-letter.** Retry transient SMTP failures with backoff; queue
    (Redis is already running) for at-least-once delivery.
-5. **Customer email too.** Send the customer their secure payment link, closing
-   the second half of the promised flow (needs a payment provider + link gen).
+5. ~~**Customer email too.** Send the customer their secure payment link.~~
+   **Dropped 2026-09-08** — we never send a payment link. A customer-facing
+   acknowledgement email ("we've got your request, your advisor is on it") is
+   still worth adding; a payment link is not.
 6. **Switch transport for scale/deliverability.** Move from raw Gmail SMTP to a
    provider (Resend/SendGrid/SES). The isolated `notifications.py` makes this a
    one-file change. SES fits the README's AWS/ECS target.
@@ -144,5 +149,6 @@ Ordered by value/effort:
   placeholders. Never commit a real App Password.
 - Use a **Gmail App Password**, not the account login password — it is
   scope-limited and independently revocable.
-- The `/api/execute-booking` endpoint and lead email are currently protected
-  only by the shared `X-API-Key`; add rate-limiting before exposing publicly.
+- The lead email path is protected by the shared `X-API-Key` plus per-IP rate
+  limiting and a Turnstile bot check. (`/api/execute-booking`, referenced here
+  previously, was deleted on 2026-09-08.)

@@ -101,15 +101,22 @@ from app.db import save_booking_lead, mark_lead_emailed
 
 async def booking_node(state: AgentState):
     sys_msg = SystemMessage(content=(
-        "You are the secure Booking Agent. Gather the details needed to start a "
-        "reservation: the user's full name, email, the cruise ID they want, the "
-        "number of passengers, their preferred cruise length (in nights), and "
-        "their preferred travel dates or date range. Ask for whichever are still "
-        "missing — it's fine to collect them over a few messages, one or two at a "
-        "time. Once you have at least the full name, email, and cruise ID, YOU "
-        "MUST call the submit_booking_lead tool, passing everything you've "
-        "collected (including passengers, cruise length, and travel dates when "
-        "known). Do not make up a confirmation number."
+        "You are the Reservation Request Agent for Horizon Voyages. Gather the "
+        "details an advisor needs to price and hold a sailing: the guest's full "
+        "name, email, the cruise ID they want, the number of passengers, their "
+        "preferred cruise length (in nights), and their preferred travel dates or "
+        "date range. Ask for whichever are still missing — it's fine to collect "
+        "them over a few messages, one or two at a time. Once you have at least "
+        "the full name, email, and cruise ID, YOU MUST call the "
+        "submit_booking_lead tool, passing everything you've collected "
+        "(including passengers, cruise length, and travel dates when known).\n\n"
+        "Hard rules. You are collecting a reservation REQUEST, not taking a "
+        "booking. Never state or imply that a cabin is held, reserved, or "
+        "confirmed. Never invent a confirmation or booking number. Never ask for "
+        "card, bank or passport details, and never promise to send a payment "
+        "link — Horizon Voyages does not collect payment. When a guest is ready "
+        "to deposit, their advisor books it with the cruise line and the guest "
+        "pays the cruise line directly. If asked about paying, say exactly that."
     ))
     booking_llm = llm.bind_tools([submit_booking_lead])
     response = await booking_llm.ainvoke([sys_msg] + state["messages"])
@@ -157,16 +164,19 @@ async def booking_node(state: AgentState):
             voyage = cruise_id or "your selected voyage"
             if sent:
                 final_text = (
-                    f"Wonderful, {first_name}! I've sent your reservation details for "
-                    f"{voyage} to our travel advisors. They'll be in touch by email at "
-                    f"{email} shortly with your secure payment link to confirm. Bon voyage!"
+                    f"Wonderful, {first_name} — I've passed your request for {voyage} to "
+                    f"your Horizon Voyages advisor. They'll email you at {email} with "
+                    f"current pricing, cabin options and anything worth knowing about "
+                    f"that sailing. Nothing is held or charged yet: when you're happy "
+                    f"with the details, your advisor places the booking and you pay the "
+                    f"cruise line directly."
                 )
             else:
                 final_text = (
-                    f"Thank you, {first_name}! Your reservation request for {voyage} is "
-                    f"recorded. We hit a snag notifying our team automatically just now, "
-                    f"but your details are saved and an advisor will follow up at {email} "
-                    f"as soon as possible."
+                    f"Thank you, {first_name} — your request for {voyage} is saved. We "
+                    f"hit a snag notifying the team automatically just now, but your "
+                    f"details are recorded and an advisor will follow up at {email} as "
+                    f"soon as possible. Nothing is held or charged at this stage."
                 )
             messages_to_return.append(AIMessage(content=final_text))
 

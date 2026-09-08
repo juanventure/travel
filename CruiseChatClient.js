@@ -57,37 +57,8 @@ class CruiseChatClient {
         }
     }
 
-    /**
-     * Polls the booking status endpoint.
-     */
-    async checkBookingStatus(bookingId) {
-        const response = await fetch(`${this.baseUrl}/api/booking-status/${bookingId}`, {
-            method: 'GET',
-            headers: {
-                'X-API-Key': this.apiKey
-            }
-        });
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
-        return await response.json();
-    }
-
-    /**
-     * Securely executes the final booking.
-     */
-    async executeBooking(bookingId, paymentToken) {
-        const response = await fetch(`${this.baseUrl}/api/execute-booking`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-Key': this.apiKey
-            },
-            body: JSON.stringify({
-                session_id: this.sessionId,
-                booking_id: bookingId,
-                payment_token: paymentToken
-            })
-        });
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
-        return await response.json();
-    }
+    // checkBookingStatus() and executeBooking() were removed (2026-09-08).
+    // The backend endpoints they called are gone: we never collect cruise
+    // payment ourselves — the guest pays the cruise line directly, either
+    // through an advisor-assisted booking or via a Partner Booking Link.
 }

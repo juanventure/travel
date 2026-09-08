@@ -5,8 +5,19 @@ booking models:
 
 - **Advisor lead-gen** — capture a qualified lead, notify the agency, advisor
   follows up (this flow exists today, needs hardening).
-- **Self-serve booking** — customer pays online and receives a confirmed
-  reservation without a human in the loop (not built yet).
+- **Self-serve booking** — the guest books without a human in the loop, by
+  clicking through to the cruise line's own booking page on an
+  agency-attributed Partner Booking Link (not built yet; see Phase 3).
+
+**Business model constraint (recorded 2026-09-08).** Horizon Voyages operates
+under a host agency (Fora). The host is the agency of record: bookings sit
+under the host's IATA number, the guest pays the cruise line directly, and
+commission flows cruise line → host → advisor. We never take cruise fare into
+our own payment processor. Doing so would (a) earn no commission, since the
+booking would not sit with the host, (b) make us the merchant of record for
+travel, triggering seller-of-travel registration and trust-accounting duties in
+CA/FL/WA/HI, and (c) almost certainly breach the host's advisor agreement.
+Every design decision below follows from this.
 
 This document is the source of truth for the roadmap. Each phase lists concrete
 tasks, the files involved, and how to verify.
@@ -21,7 +32,7 @@ tasks, the files involved, and how to verify.
 | Inventory | Mock — 3 hardcoded cruises in `tools.py` (`MOCK_GDS`) |
 | Lead capture | Email + logs only; **no persistence** |
 | Agency email | Working (Gmail SMTP); deliverability not production-grade |
-| Payments / reservations | Stub — `execute_final_booking`/`check_booking_status` return fake data |
+| Payments / reservations | **Removed 2026-09-08.** `/api/execute-booking` and `/api/booking-status` returned fabricated confirmation codes from a public endpoint; deleted along with their models, `agent_wrapper` stubs and the `CruiseChatClient.js` methods. We do not take payment — see the business model constraint above. |
 | Auth | Single shared `X-API-Key`, exposed in frontend JS |
 | CORS | `allow_origins=["*"]` |
 | Rate limiting | None (Redis provisioned but unused) |
@@ -72,26 +83,57 @@ Make the advisor flow durable and reliable.
       leads + consultation inquiries. Separate `ADMIN_USER`/`ADMIN_PASSWORD`
       auth (not the public API key); disabled (503) when unconfigured. — `admin.py`, `db.py`, `main.py`
 
-## Phase 3 — Self-serve booking & payments
+## Phase 3 — Self-serve booking via Partner Booking Links
 
-The new capability. Recommended stack: **Stripe Checkout (hosted)** to avoid
-PCI scope.
+**Superseded 2026-09-08.** The original plan here (Stripe Checkout, a
+`reservations` table, webhooks, refund reconciliation) is cancelled — see the
+business model constraint at the top. We cannot take cruise fare.
 
-- [ ] **3a. Real inventory** — replace `MOCK_GDS` with a curated DB table (or a
-      supplier/GDS integration). Inventory has price, availability, deposit.
-- [ ] **3b. Orders/reservations data model** — `reservations` (customer, cruise,
-      status: pending→paid→confirmed→failed, amount, Stripe ids).
-- [ ] **3c. Create Checkout Session** — `/api/checkout` creates a Stripe Checkout
-      session for the selected cruise/deposit and returns the URL; chat/UI
-      redirects the customer there.
-- [ ] **3d. Stripe webhook** — `/api/webhooks/stripe` verifies signature, marks
-      the reservation paid, and triggers the confirmation.
-- [ ] **3e. Customer confirmation email** — receipt + booking reference (closes
-      the "you'll receive an email" promise for the self-serve path).
-- [ ] **3f. Route in chat** — the booking agent offers "pay now (self-serve)"
-      vs. "have an advisor call me (lead)" and routes accordingly.
-- [ ] **3g. Idempotency & reconciliation** — handle duplicate webhooks, abandoned
-      checkouts, refunds.
+The same goal — the guest books with no human in the loop — is met instead by a
+**Partner Booking Link (PBL)**: a deep link from our site into the cruise
+line's own consumer booking flow, carrying the host agency's attribution. The
+guest shops live inventory and live pricing on the cruise line's site, pays the
+cruise line, and the booking lands with full commission to the agency. No
+payment code, no PCI scope, no inventory feed, no confirmation emails to send.
+
+Royal Caribbean Group's CruisingPower portal documents PBL explicitly ("When
+consumers book through your Partner Booking Link, you receive full
+commission"), which covers Royal Caribbean, Celebrity and Silversea from a
+single portal.
+
+- [ ] **3a. Confirm PBL is permitted under the host's IATA** — ask Fora directly
+      whether advisors may deploy Partner Booking Links, and how attribution and
+      the commission split flow back. **Blocks everything else in this phase.**
+- [ ] **3b. Per-line attribution audit** — for each line we build for, confirm
+      with the BDM that a consumer-facing attributed booking link exists and get
+      the URL format. Confirmed so far: Royal Caribbean Group (CruisingPower).
+      Unconfirmed: Virgin, and everything else.
+- [ ] **3c. Curated sailings table** — replace `MOCK_GDS` with a DB table of
+      hand-picked sailings. Each row: line, ship, region, nights, sail date,
+      short editorial note, and `booking_url` (the PBL deep link). No fares
+      stored — pricing lives on the cruise line's page, which also keeps the
+      inventory agent's existing "never quote a price" rule honest.
+- [ ] **3d. Admin CRUD for sailings** — extend `/admin` so sailings can be added
+      and retired without a deploy. Dead sail dates are worse than none.
+- [ ] **3e. Route in chat** — the inventory agent offers two paths: "book this
+      yourself" (hand over the PBL) or "have an advisor handle it" (existing
+      `submit_booking_lead` flow). Log which path each session takes.
+- [ ] **3f. Attribution tracking** — tag outbound PBL clicks so we can reconcile
+      site clicks against commission statements. Without this we cannot tell
+      whether the self-serve path works at all.
+
+### Line strategy (decided 2026-09-08)
+
+**Build for** — curated sailings, PBLs, dedicated landing copy:
+Royal Caribbean, Celebrity, Silversea (one portal, CruisingPower, covering
+mainstream → premium → luxury) and Virgin Voyages (strong advisor program,
+adults-only positioning that matches the site's existing voice).
+
+**Book on request** — everything else, including Carnival. Handled by the
+existing consultation form and chat lead flow; no per-line build work. Carnival
+in particular is deliberately not a build target: lowest fares in the
+mainstream segment means the fewest commission dollars per booking, and it sits
+badly against the site's premium positioning. Revisit with real booking data.
 
 ## Phase 4 — Reliability & ops
 
@@ -135,16 +177,23 @@ domain. ≈ $7/mo + ~$10/yr. **Repo is prepped + a step-by-step guide is written
 
 ## Target data model (Phases 2–3)
 
+The `reservations` table is cancelled with the Stripe plan — we hold no orders,
+because we take no money. The self-serve path stores curated sailings and click
+attribution instead.
+
 ```
-booking_leads   (advisor flow)         reservations (self-serve flow)
+booking_leads   (advisor flow)         sailings (self-serve flow)
   id                                     id
-  full_name, email                       customer_name, email
-  cruise_id, cruise_details              cruise_id
-  session_id                             amount_cents, currency
-  email_sent (bool)                      status (pending/paid/confirmed/failed)
-  created_at                             stripe_session_id, stripe_payment_intent
-                                         booking_reference
+  full_name, email                       cruise_line, ship
+  cruise_id, cruise_details              region, nights, sail_date
+  session_id                             editorial_note
+  email_sent (bool)                      booking_url   (Partner Booking Link)
+  created_at                             active (bool)
                                          created_at, updated_at
+
+                                       pbl_clicks (attribution)
+                                         id, sailing_id, session_id
+                                         clicked_at
 ```
 
 ## Decisions still needed from owner
@@ -159,9 +208,19 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
    - Requires a Gmail **App Password** (`SMTP_APP_PASSWORD`), not the login
      password; 2FA must stay enabled on the account.
 2. Bot-protection choice + keys (Turnstile vs reCAPTCHA).
-3. Inventory source — curated list vs. real supplier/GDS integration.
-4. Deposit vs. full payment for self-serve; refund/cancellation policy.
-5. ~~Hosting target (simple PaaS vs. full AWS per README).~~ **Decided
+3. ~~Inventory source — curated list vs. real supplier/GDS integration.~~
+   **Decided 2026-09-08: curated list.** A real GDS/supplier feed needs
+   agency-level contracts we cannot hold as an advisor under a host, and the
+   bookings would attribute to whoever holds the feed. Live pricing comes from
+   the cruise line's own page at the end of the PBL.
+4. ~~Deposit vs. full payment for self-serve; refund/cancellation policy.~~
+   **Moot 2026-09-08** — we take no payment. Deposit terms, refunds and
+   cancellation are the cruise line's, governed by their contract of carriage.
+5. **Open — confirm with Fora before Phase 3:** (a) may advisors deploy Partner
+   Booking Links under the host IATA, and how does attribution reach us;
+   (b) what disclosure the site must carry about the host relationship;
+   (c) any restrictions on advertising fares or promotions on our own site.
+6. ~~Hosting target (simple PaaS vs. full AWS per README).~~ **Decided
    2026-06-16:** Cloudflare Pages + Render + Neon + Upstash (see Phase 5 / `docs/deploy.md`).
 
 ## Status — done
@@ -178,3 +237,7 @@ booking_leads   (advisor flow)         reservations (self-serve flow)
 - Phase 4c — config-driven frontend (`config.js` / `window.APP_CONFIG`).
 - Phase 5 prep — deploy stack chosen, repo prepped (`render.yaml`, `$PORT`,
   managed-Postgres SSL), step-by-step guide at `docs/deploy.md`.
+- 2026-09-08 — business model constraint recorded; Phase 3 rewritten around
+  Partner Booking Links; `/api/execute-booking` + `/api/booking-status` and
+  their client methods deleted; booking agent copy corrected so it no longer
+  promises a payment link or implies a cabin is held.

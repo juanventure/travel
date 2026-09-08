@@ -59,7 +59,8 @@ def send_booking_lead_email(full_name: str, email: str, cruise_id: str,
     )
     if cruise_details:
         body += f"\nVoyage details:\n{cruise_details}\n"
-    body += "\nFollow up to send the customer their secure payment link."
+    body += ("\nNext step: reply with current pricing and cabin options. "
+             "Nothing is held — book it with the cruise line when they confirm.")
     msg.set_content(body)
 
     try:
