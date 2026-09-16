@@ -13,6 +13,7 @@ publishes test keys:
   always-passes sitekey (frontend): 1x00000000000000000000AA
 """
 import os
+import time
 
 import httpx
 from fastapi import Request, HTTPException, status
@@ -22,6 +23,38 @@ from app.ratelimit import get_redis, _client_ip
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET_KEY", "")
 VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 VERIFIED_TTL_SECONDS = 86400  # remember a verified session for 24h
+
+# In-process fallback for verified sessions, so a conversation survives Redis
+# being unreachable or misconfigured. Redis remains the shared store (it is what
+# works across instances and restarts); this is the local safety net.
+#
+# Without it the failure is silent and total: the browser sends a Turnstile token
+# only on the FIRST message of a session, so if the verified-session record can't
+# be read back, every follow-up message arrives tokenless and is rejected 403 —
+# the chat answers once and then dies.
+_verified_local: dict[str, float] = {}
+_LOCAL_MAX = 10_000
+
+
+def _local_verified(session_id: str) -> bool:
+    expires = _verified_local.get(session_id)
+    if expires is None:
+        return False
+    if expires < time.time():
+        _verified_local.pop(session_id, None)
+        return False
+    return True
+
+
+def _remember_local(session_id: str) -> None:
+    if len(_verified_local) >= _LOCAL_MAX:
+        now = time.time()
+        for key, expires in list(_verified_local.items()):
+            if expires < now:
+                _verified_local.pop(key, None)
+        if len(_verified_local) >= _LOCAL_MAX:
+            _verified_local.clear()  # last resort; sessions re-verify on demand
+    _verified_local[session_id] = time.time() + VERIFIED_TTL_SECONDS
 
 
 async def _verify_token(token: str, remoteip: str) -> bool:
@@ -45,14 +78,19 @@ async def enforce_chat_captcha(session_id: str, token: str | None, request: Requ
     if not TURNSTILE_SECRET:
         return  # bot protection disabled (no secret configured)
 
+    # Cheapest check first: this process already verified the session.
+    if _local_verified(session_id):
+        return
+
     verified_key = f"captcha_ok:{session_id}"
-    # Redis is an optimization (skip re-verifying a known-good session). If it is
-    # unavailable OR misconfigured (e.g. a bad REDIS_URL), fail open: fall through
-    # to verifying the token directly rather than crashing the request.
+    # Redis is the shared store (survives restarts, works across instances). If it
+    # is unavailable OR misconfigured (e.g. a bad REDIS_URL), carry on with the
+    # in-process record above and verify the token directly when we have one.
     r = None
     try:
         r = get_redis()
         if await r.get(verified_key):
+            _remember_local(session_id)  # keep serving this session if Redis drops
             return  # this session already passed
     except Exception as exc:  # noqa: BLE001
         print(f"[captcha] redis unavailable ({exc!r}); verifying token directly.")
@@ -69,6 +107,10 @@ async def enforce_chat_captcha(session_id: str, token: str | None, request: Requ
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Captcha verification failed.",
         )
+
+    # Record the pass locally first — this is what keeps the conversation alive
+    # when Redis is down, since it never fails.
+    _remember_local(session_id)
 
     if r is not None:
         try:

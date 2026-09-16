@@ -285,12 +285,25 @@ if (chatToggle && chatWindow) {
   const captchaEl = document.getElementById('chat-captcha');
   let captchaToken = null;
   let captchaWidgetId = null;
-  // Once the first message succeeds, the backend remembers this session (24h),
-  // so the bot-check widget is no longer needed and stays hidden.
+  // Once the first message succeeds, the backend remembers this session, so the
+  // widget is hidden. This is presentation only — it must never stop us getting
+  // a fresh token, because the server can forget the session (restart, cache
+  // eviction, 24h expiry) and then asks for the bot check again mid-conversation.
   let captchaVerified = false;
+  // Set while we're waiting on Turnstile for a replacement token.
+  let pendingTokenResolve = null;
 
   function showCaptcha(visible) {
     if (captchaEl) captchaEl.style.display = visible ? '' : 'none';
+  }
+
+  function deliverToken(token) {
+    captchaToken = token;
+    if (pendingTokenResolve) {
+      const resolve = pendingTokenResolve;
+      pendingTokenResolve = null;
+      resolve(token);
+    }
   }
 
   function renderCaptcha() {
@@ -301,13 +314,39 @@ if (chatToggle && chatWindow) {
     captchaWidgetId = window.turnstile.render(captchaEl, {
       sitekey: TURNSTILE_SITE_KEY,
       callback: (token) => {
-        captchaToken = token;
+        deliverToken(token);
         // Human confirmed — let the "Success!" tick show briefly, then collapse
         // the widget so it doesn't clutter the chat.
         setTimeout(() => { if (captchaToken) showCaptcha(false); }, 1000);
       },
       'expired-callback': () => { captchaToken = null; if (!captchaVerified) showCaptcha(true); },
-      'error-callback': () => { captchaToken = null; if (!captchaVerified) showCaptcha(true); },
+      'error-callback': () => { deliverToken(null); if (!captchaVerified) showCaptcha(true); },
+    });
+  }
+
+  /**
+   * Ask Turnstile for a new token, resolving with it (or null if we can't get
+   * one in time). Used to recover when the server has forgotten this session.
+   */
+  function freshCaptchaToken(timeoutMs = 15000) {
+    return new Promise((resolve) => {
+      if (!window.turnstile || captchaWidgetId === null) { resolve(null); return; }
+      captchaToken = null;
+      pendingTokenResolve = resolve;
+      showCaptcha(true);
+      try {
+        window.turnstile.reset(captchaWidgetId);
+      } catch (e) {
+        pendingTokenResolve = null;
+        resolve(null);
+        return;
+      }
+      setTimeout(() => {
+        if (pendingTokenResolve === resolve) {
+          pendingTokenResolve = null;
+          resolve(captchaToken);
+        }
+      }, timeoutMs);
     });
   }
 
@@ -346,8 +385,9 @@ if (chatToggle && chatWindow) {
     
     const thoughtMsg = appendMessage('Thinking...', 'ai-msg thought-msg');
 
-    try {
-      for await (const chunk of chatClient.sendMessage(text, captchaToken)) {
+    // Streams one exchange. Returns true on success.
+    const stream = async (token) => {
+      for await (const chunk of chatClient.sendMessage(text, token)) {
         if (chunk.type === 'thought') {
           thoughtMsg.querySelector('.msg-content').textContent = chunk.content;
         } else if (chunk.type === 'message') {
@@ -355,16 +395,51 @@ if (chatToggle && chatWindow) {
           appendMessage(chunk.content, 'ai-msg');
         }
       }
-      // First successful exchange verifies this session server-side (remembered
-      // for 24h), so the bot-check widget is no longer needed — keep it hidden.
+      return true;
+    };
+
+    try {
+      await stream(captchaToken);
+      // The exchange verified this session server-side, so the widget can stay
+      // hidden — until the server tells us otherwise, handled below.
       captchaVerified = true;
       captchaToken = null;
       showCaptcha(false);
     } catch (err) {
+      // A 403 means the bot check needs redoing: either this is the first
+      // message and the token was missing/stale, or the server has forgotten a
+      // session it previously verified. Both are recoverable — get a fresh
+      // token and retry once rather than stranding the conversation.
+      if (err && err.status === 403) {
+        thoughtMsg.querySelector('.msg-content').textContent = 'One moment — just confirming you’re human…';
+        const retryToken = await freshCaptchaToken();
+        if (retryToken) {
+          try {
+            await stream(retryToken);
+            captchaVerified = true;
+            captchaToken = null;
+            showCaptcha(false);
+            return;
+          } catch (retryErr) {
+            console.error(retryErr);
+          }
+        }
+        thoughtMsg.remove();
+        appendMessage(
+          'I could not confirm this session. Please complete the check below and send that again.',
+          'ai-msg'
+        );
+        captchaVerified = false;
+        showCaptcha(true);
+        return;
+      }
+
       console.error(err);
       thoughtMsg.remove();
-      appendMessage('Sorry, I am having trouble connecting to the backend. Please try again later.', 'ai-msg');
-      // Not verified yet — restore a fresh challenge so the user can retry.
+      appendMessage(
+        'Sorry — I could not reach our system just then. Please try again, or use the "Talk to a live advisor" button above.',
+        'ai-msg'
+      );
       if (!captchaVerified && captchaWidgetId !== null && window.turnstile) {
         window.turnstile.reset(captchaWidgetId);
         captchaToken = null;

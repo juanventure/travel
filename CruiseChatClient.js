@@ -23,7 +23,12 @@ class CruiseChatClient {
         });
 
         if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
+            // Carry the status on the error so callers can react to it — a 403
+            // means the bot check needs redoing, which is recoverable, while a
+            // 500 is not.
+            const err = new Error(`API Error: ${response.status}`);
+            err.status = response.status;
+            throw err;
         }
 
         const reader = response.body.getReader();
