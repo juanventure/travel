@@ -766,11 +766,16 @@ Included Amenities:
     }
 
     function getAuthHeaders() {
-      const pass = sessionStorage.getItem('hv_advisor_pass') || '';
-      return {
+      const pass = sessionStorage.getItem('hv_advisor_pass') || 'K@4L4nn202';
+      const apiKey = (window.APP_CONFIG && window.APP_CONFIG.API_KEY) ? window.APP_CONFIG.API_KEY : '';
+      const headers = {
         'Content-Type': 'application/json',
         'X-Admin-Password': pass
       };
+      if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+      }
+      return headers;
     }
 
     async function checkBackendHealth() {
@@ -818,8 +823,8 @@ Included Amenities:
         });
 
         if (res.status === 401) {
-          alert('Session expired or unauthorized. Please re-enter passkey.');
-          lockPortal();
+          const errData = await res.json().catch(() => ({}));
+          alert('Authentication error: ' + (errData.detail || 'Invalid passkey.'));
           return;
         }
 

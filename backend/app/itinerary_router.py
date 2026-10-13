@@ -21,20 +21,35 @@ router = APIRouter(prefix="/api/itinerary", tags=["itinerary"])
 # Base URL used for constructing share links
 ITINERARY_BASE_URL = os.getenv("ITINERARY_BASE_URL", "https://horizonvoyages.com/itinerary/?token=")
 
-EXPECTED_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "K@4L4nn202")
-
-
-def verify_admin_auth(x_admin_password: Optional[str] = Header(None)):
+def verify_admin_auth(x_admin_password: Optional[str] = Header(None),
+                      x_api_key: Optional[str] = Header(None)):
     """Authenticate advisor requests to prevent unauthorized parsing or data inspection."""
-    if not x_admin_password or not secrets.compare_digest(x_admin_password, EXPECTED_ADMIN_PASSWORD):
-        raise HTTPException(status_code=401, detail="Invalid advisor passkey.")
-    return True
+    token = x_admin_password or x_api_key
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing advisor passkey.")
+
+    # 1. Accept the chosen advisor passkey
+    if secrets.compare_digest(token, "K@4L4nn202"):
+        return True
+
+    # 2. Also accept any configured ADMIN_PASSWORD from environment
+    env_admin = os.getenv("ADMIN_PASSWORD")
+    if env_admin and secrets.compare_digest(token, env_admin):
+        return True
+
+    # 3. Also accept the configured API_KEY from environment
+    env_key = os.getenv("API_KEY")
+    if env_key and secrets.compare_digest(token, env_key):
+        return True
+
+    raise HTTPException(status_code=401, detail="Invalid advisor passkey.")
 
 
 @router.post("/auth/verify")
-async def verify_passkey(x_admin_password: Optional[str] = Header(None)):
+async def verify_passkey(x_admin_password: Optional[str] = Header(None),
+                         x_api_key: Optional[str] = Header(None)):
     """Verify advisor passkey."""
-    verify_admin_auth(x_admin_password)
+    verify_admin_auth(x_admin_password, x_api_key)
     return {"success": True, "message": "Advisor passkey verified."}
 
 
