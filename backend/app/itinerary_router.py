@@ -19,7 +19,7 @@ from app.db import save_itinerary, get_itinerary_by_token, list_itineraries
 router = APIRouter(prefix="/api/itinerary", tags=["itinerary"])
 
 # Base URL used for constructing share links
-ITINERARY_BASE_URL = os.getenv("ITINERARY_BASE_URL", "https://horizonvoyages.com/itinerary/?token=")
+ITINERARY_BASE_URL = os.getenv("ITINERARY_BASE_URL", "https://horizonvoyages.net/itinerary/?token=")
 
 def verify_admin_auth(x_admin_password: Optional[str] = Header(None),
                       x_api_key: Optional[str] = Header(None)):

@@ -40,7 +40,7 @@ The target JSON schema structure:
     "name": "Juan Garcia",
     "agency": "Horizon Voyages (Fora Travel)",
     "phone": "+1 (800) 555-0199",
-    "email": "juan@horizonvoyages.com",
+    "email": "juan@horizonvoyages.net",
     "avatar": "assets/advisor_portrait.png",
     "conciergeHours": "24/7 Priority Sea Support"
   },
@@ -332,7 +332,7 @@ def _heuristic_fallback_parser(raw_text: str) -> dict:
             "name": "Juan Garcia",
             "agency": "Horizon Voyages (Fora Travel)",
             "phone": "+1 (800) 555-0199",
-            "email": "juan@horizonvoyages.com",
+            "email": "juan@horizonvoyages.net",
             "avatar": "assets/advisor_portrait.png",
             "conciergeHours": "24/7 Priority Sea Support"
         },

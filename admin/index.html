@@ -855,10 +855,19 @@ Included Amenities:
       document.getElementById('resStateroom').textContent = booking.stateroom || 'Confirmed Cabin';
       document.getElementById('resDates').textContent = `${booking.embarks?.date || 'Upcoming'} (${itin.days?.length || 0} Days)`;
 
-      // Share URL
-      const shareUrl = data.share_url || `${window.location.origin}/itinerary/?token=${data.token}`;
+      // Share URL (enforce https://horizonvoyages.net)
+      let shareUrl = data.share_url || '';
+      if (shareUrl.includes('horizonvoyages.com')) {
+        shareUrl = shareUrl.replace('horizonvoyages.com', 'horizonvoyages.net');
+      }
+      if (!shareUrl) {
+        const origin = (window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:'))
+          ? window.location.origin
+          : 'https://horizonvoyages.net';
+        shareUrl = `${origin}/itinerary/?token=${encodeURIComponent(data.token)}`;
+      }
       document.getElementById('resShareUrl').value = shareUrl;
-      document.getElementById('btnPreviewLink').href = `../itinerary/?token=${data.token}`;
+      document.getElementById('btnPreviewLink').href = `/itinerary/?token=${encodeURIComponent(data.token)}`;
 
       box.style.display = 'block';
       box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -892,7 +901,7 @@ Included Amenities:
                 <td>${escapeHtml(item.cruise_line || '')} ${escapeHtml(item.ship_name ? '— ' + item.ship_name : '')}</td>
                 <td>${escapeHtml(item.sail_date || '—')}</td>
                 <td>
-                  <a href="../itinerary/?token=${encodeURIComponent(item.token)}" target="_blank" class="token-pill">
+                  <a href="/itinerary/?token=${encodeURIComponent(item.token)}" target="_blank" class="token-pill">
                     <span>${item.token.substring(0, 8)}…</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   </a>

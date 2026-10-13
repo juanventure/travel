@@ -2,7 +2,7 @@
  * Horizon Voyages - Digital Itinerary Data Model
  * Sample High-End Curated Voyage
  */
-const VOYAGE_DATA = {
+var VOYAGE_DATA = {
   id: "HV-2026-GRE-8821",
   title: "12-Night Greek Isles & Adriatic Luxury Expedition",
   tagline: "Curated Luxury Voyage aboard Celebrity Beyond",
@@ -16,7 +16,7 @@ const VOYAGE_DATA = {
     name: "Juan Garcia",
     agency: "Horizon Voyages (Fora Travel)",
     phone: "+1 (800) 555-0199",
-    email: "juan@horizonvoyages.com",
+    email: "juan@horizonvoyages.net",
     avatar: "assets/advisor_portrait.png",
     conciergeHours: "24/7 Priority Sea Support"
   },
@@ -597,3 +597,5 @@ const VOYAGE_DATA = {
     "Prescription medications in original bottles in carry-on"
   ]
 };
+
+window.VOYAGE_DATA = VOYAGE_DATA;

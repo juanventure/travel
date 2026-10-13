@@ -3,7 +3,7 @@
  * Network-first strategy with cache fallback for offline at-sea access.
  */
 
-const CACHE_NAME = 'horizon-itinerary-v3';
+const CACHE_NAME = 'horizon-itinerary-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
