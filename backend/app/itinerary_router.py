@@ -5,7 +5,8 @@ and retrieving itineraries by unique secure token.
 """
 
 import os
-from fastapi import APIRouter, HTTPException, Depends
+import secrets
+from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional
 
 from app.models import (
@@ -20,8 +21,24 @@ router = APIRouter(prefix="/api/itinerary", tags=["itinerary"])
 # Base URL used for constructing share links
 ITINERARY_BASE_URL = os.getenv("ITINERARY_BASE_URL", "https://horizonvoyages.com/itinerary/?token=")
 
+EXPECTED_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "K@4L4nn202")
 
-@router.post("/parse", response_model=ParseItineraryResponse)
+
+def verify_admin_auth(x_admin_password: Optional[str] = Header(None)):
+    """Authenticate advisor requests to prevent unauthorized parsing or data inspection."""
+    if not x_admin_password or not secrets.compare_digest(x_admin_password, EXPECTED_ADMIN_PASSWORD):
+        raise HTTPException(status_code=401, detail="Invalid advisor passkey.")
+    return True
+
+
+@router.post("/auth/verify")
+async def verify_passkey(x_admin_password: Optional[str] = Header(None)):
+    """Verify advisor passkey."""
+    verify_admin_auth(x_admin_password)
+    return {"success": True, "message": "Advisor passkey verified."}
+
+
+@router.post("/parse", response_model=ParseItineraryResponse, dependencies=[Depends(verify_admin_auth)])
 async def parse_cruise_confirmation(req: ParseItineraryRequest):
     """
     Ingest unstructured confirmation text or PDF extracts (e.g. Carnival, Norwegian,
@@ -75,8 +92,8 @@ async def save_or_update_itinerary(req: SaveItineraryRequest):
     )
 
 
-@router.get("/list/all")
-@router.get("s/list")
+@router.get("/list/all", dependencies=[Depends(verify_admin_auth)])
+@router.get("s/list", dependencies=[Depends(verify_admin_auth)])
 async def get_all_itineraries(limit: int = 50):
     """
     Administrative overview: returns recent itineraries metadata.
