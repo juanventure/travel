@@ -363,12 +363,36 @@ if (chatToggle && chatWindow) {
     chatWindow.hidden = true;
   });
 
+  // Render text into `el`, turning http(s) URLs into safe clickable links.
+  // Uses DOM nodes (never innerHTML) so model output cannot inject markup.
+  const URL_RE = /https?:\/\/[^\s<>"')\]]+/g;
+  const renderWithLinks = (el, text) => {
+    let last = 0;
+    for (const m of text.matchAll(URL_RE)) {
+      // Trailing sentence punctuation is not part of the URL.
+      const url = m[0].replace(/[.,;:!?]+$/, '');
+      el.appendChild(document.createTextNode(text.slice(last, m.index)));
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      el.appendChild(a);
+      last = m.index + url.length;
+    }
+    el.appendChild(document.createTextNode(text.slice(last)));
+  };
+
   const appendMessage = (text, type = 'ai-msg') => {
     const msgDiv = document.createElement('div');
     msgDiv.className = `chat-msg ${type}`;
     const contentDiv = document.createElement('div');
     contentDiv.className = 'msg-content';
-    contentDiv.textContent = text;
+    if (type.includes('ai-msg') && !type.includes('thought-msg')) {
+      renderWithLinks(contentDiv, text);
+    } else {
+      contentDiv.textContent = text;
+    }
     msgDiv.appendChild(contentDiv);
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;

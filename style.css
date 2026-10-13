@@ -1049,6 +1049,12 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   color: var(--cream);
   border: 1px solid var(--border);
   border-bottom-left-radius: 2px;
+  white-space: pre-wrap;      /* keep the line breaks in "Sources:" lists */
+  overflow-wrap: anywhere;    /* long URLs must not overflow the bubble */
+}
+.ai-msg .msg-content a {
+  color: var(--gold);
+  text-decoration: underline;
 }
 .ai-msg.thought-msg .msg-content {
   background: transparent;

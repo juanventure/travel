@@ -22,6 +22,9 @@ services:
       # AI + auth:
       - key: GOOGLE_API_KEY
         sync: false
+      # Live cruise search (Tavily):
+      - key: TAVILY_API_KEY
+        sync: false
       - key: API_KEY
         sync: false          # must match API_KEY in the frontend config.js
       # CORS: comma-separated list of your frontend origins (https://…):

@@ -1,16 +1,20 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from app.graph.state import AgentState
-from app.graph.tools import search_gds_inventory
+from app.graph.tools import (
+    search_gds_inventory, search_live_cruises, SEARCH_LIVE_CRUISES_SCHEMA,
+)
 import asyncio
 import json
 import os
+from datetime import datetime
 
 # Initialize Gemini Model
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 
-# Tool-enabled LLM for the Inventory Agent
-inventory_llm = llm.bind_tools([search_gds_inventory])
+# Tool-enabled LLM for the Inventory Agent. The raw JSON schema is registered so
+# the model can pause generation and request a live web search.
+inventory_llm = llm.bind_tools([SEARCH_LIVE_CRUISES_SCHEMA])
 
 def router_node(state: AgentState):
     """
@@ -32,7 +36,11 @@ def router_node(state: AgentState):
     
     if "book" in latest_msg or "reserve" in latest_msg or "pay" in latest_msg:
         next_intent = "Booking"
-    elif any(keyword in latest_msg for keyword in ["price", "cost", "alaska", "caribbean", "mediterranean", "find", "search"]):
+    elif any(keyword in latest_msg for keyword in [
+        "price", "cost", "alaska", "caribbean", "mediterranean", "find", "search",
+        "january", "february", "march", "april", "june", "july", "august",
+        "september", "october", "november", "december",
+    ]):
         next_intent = "Inventory"
     else:
         next_intent = "Consultation"
@@ -53,47 +61,74 @@ async def consultation_node(state: AgentState):
     return {"messages": [response]}
 
 async def inventory_node(state: AgentState):
+    today = datetime.now().strftime("%B %d, %Y")
     sys_msg = SystemMessage(content=(
-        "You are the Inventory Agent for Horizon Voyages. Use the search_gds_inventory "
-        "tool to find sailings that match what the guest is looking for. "
-        "After the tool returns results, reply in warm, concise natural language with a "
-        "summary of the matching sailings — include the voyage ID, ship, number of "
-        "nights, and sail date for each. "
-        "Do NOT quote specific prices, fares, or dollar amounts. Cruise pricing changes "
-        "until a deposit is placed, so instead let the guest know their dedicated "
-        "Horizon Voyages advisor will provide current, personalized pricing — and warmly "
-        "invite them to share their name and email (or say 'book') so we can follow up "
-        "with a tailored quote. "
-        "If there are no matches, say so politely and invite them to adjust their criteria."
+        "You are the Inventory Agent for Horizon Voyages. Today's date is "
+        f"{today}. Use the search_live_cruises tool to find real, current sailings "
+        "and cruise-line pages for what the guest is looking for. You need a "
+        "destination, a month and a year before searching: if the guest gives a "
+        "month without a year, use the next upcoming occurrence of that month; if "
+        "the destination or month is missing, ask for it instead of guessing. Only "
+        "set cruise_line if the guest named one.\n\n"
+        "The tool returns JSON: {\"ok\", \"results\": [{\"title\", \"url\", "
+        "\"snippet\"}]} or {\"ok\": false, \"message\"}. Base your answer ONLY on "
+        "those results. In warm, concise natural language, summarise the most "
+        "relevant sailings or itineraries (ship, cruise line, nights, dates, ports) "
+        "when the snippets state them, and never invent details they don't. "
+        "SOURCES ARE REQUIRED: after your summary, add a 'Sources:' list with one "
+        "line per result you used, formatted exactly as 'Title - https://full-url', "
+        "using the URL strings from the tool result verbatim. Plain text only — no "
+        "markdown, no angle brackets — so the links are clickable. Never make up or "
+        "alter a URL.\n\n"
+        "Do NOT quote specific prices, fares, or dollar amounts, even if a snippet "
+        "contains one. Cruise pricing changes until a deposit is placed, so instead "
+        "let the guest know their dedicated Horizon Voyages advisor will provide "
+        "current, personalized pricing — and warmly invite them to share their name "
+        "and email (or say 'book') so we can follow up with a tailored quote. "
+        "If the tool reports an error, a past date, or no results, say so politely "
+        "(for a past date, ask for a future one) and offer to connect them with an "
+        "advisor or the consultation form instead. Never present these results as "
+        "something Horizon Voyages has reserved or can guarantee."
     ))
     
-    # We invoke the tool-bound LLM
+    # We invoke the tool-bound LLM. If it emits a tool call, the graph routes to
+    # tool_execution_node, then back here with the results in the history.
     response = await inventory_llm.ainvoke([sys_msg] + state["messages"])
     return {"messages": [response]}
 
+async def _run_tool_call(tool_call) -> ToolMessage:
+    """Execute one model tool call and wrap the result as a ToolMessage."""
+    name = tool_call["name"]
+    args = tool_call.get("args") or {}
+    try:
+        if name == "search_live_cruises":
+            result = await search_live_cruises(
+                destination=args.get("destination", ""),
+                month=args.get("month", ""),
+                year=args.get("year"),
+                cruise_line=args.get("cruise_line"),
+            )
+        elif name == "search_gds_inventory":
+            result = search_gds_inventory.invoke(args)
+        else:
+            result = json.dumps({"ok": False, "message": f"Unknown tool: {name}"})
+    except Exception as exc:  # noqa: BLE001 - always answer the tool call
+        print(f"[tools] {name} failed: {exc!r}")
+        result = json.dumps({"ok": False, "message": "The tool failed unexpectedly."})
+    # A proper ToolMessage with the tool name and matching tool_call_id: Gemini
+    # requires the function name on the response to correlate it with the call,
+    # otherwise the follow-up model turn comes back empty.
+    return ToolMessage(content=result, tool_call_id=tool_call["id"], name=name)
+
 async def tool_execution_node(state: AgentState):
     """
-    Executes the tool call returned by the Inventory agent.
+    Executes the tool call(s) returned by the Inventory agent. Each call is run
+    concurrently and answered with exactly one ToolMessage.
     """
-    messages = state["messages"]
-    last_msg = messages[-1]
-    
-    tool_messages = []
-    if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
-        for tool_call in last_msg.tool_calls:
-            if tool_call["name"] == "search_gds_inventory":
-                args = tool_call["args"]
-                result = search_gds_inventory.invoke(args)
-                # Use a proper ToolMessage incl. the tool name; Gemini requires the
-                # function name on the response to correlate it with the call,
-                # otherwise the follow-up model turn comes back empty.
-                tool_messages.append(ToolMessage(
-                    content=result,
-                    tool_call_id=tool_call["id"],
-                    name=tool_call["name"],
-                ))
-    
-    return {"messages": tool_messages}
+    last_msg = state["messages"][-1]
+    tool_calls = getattr(last_msg, "tool_calls", None) or []
+    tool_messages = await asyncio.gather(*(_run_tool_call(tc) for tc in tool_calls))
+    return {"messages": list(tool_messages)}
 
 from app.graph.tools import search_gds_inventory, submit_booking_lead, get_cruise_details
 from app.notifications import send_booking_lead_email
