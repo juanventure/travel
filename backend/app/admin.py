@@ -16,7 +16,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from app.db import list_booking_leads, list_consultations, list_callback_requests
+from app.db import (
+    list_booking_leads, list_consultations, list_callback_requests, list_itineraries,
+)
 from app.ratelimit import rate_limiter
 
 router = APIRouter()
@@ -53,6 +55,8 @@ def _fmt(value) -> str:
         return value.strftime("%Y-%m-%d %H:%M UTC")
     if isinstance(value, bool):
         return "yes" if value else "no"
+    if isinstance(value, str) and value.startswith("<a "):
+        return value
     return html.escape(str(value))
 
 
@@ -95,12 +99,76 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
     inquiries = await list_consultations()
     callbacks = await list_callback_requests()
 
+    itins = await list_itineraries()
+
     callbacks_table = _table(
         "Callback requests",
         ["ID", "Name", "Phone", "Trip", "Notified", "Created"],
         [[c.id, c.name, c.phone, c.trip_summary, c.notified, c.created_at]
          for c in callbacks],
     )
+
+    itins_table = _table(
+        "Client Digital Itineraries",
+        ["ID", "Client", "Vessel & Line", "Sail Date", "Token Portal Link", "Created"],
+        [[it.get("id"),
+          it.get("client_name") or "—",
+          f"{it.get('cruise_line') or ''} ({it.get('ship_name') or ''})".strip() or "—",
+          it.get("sail_date") or "—",
+          f'<a href="/itinerary/?token={it.get("token")}" target="_blank" style="color:#c8a96e; font-weight:600;">Open Itinerary ({it.get("token")[:8]}…) ↗</a>',
+          it.get("created_at")]
+         for it in itins],
+    )
+
+    generator_html = """
+    <section>
+      <h2>Generate Client Digital Itinerary (AI Confirmation Parser)</h2>
+      <p class="sub" style="margin-bottom:12px;">Paste raw confirmation text from cruise lines (Norwegian, Carnival, Celebrity, Virgin, Royal Caribbean, etc.) to extract logistics and issue an authenticated client portal link.</p>
+      <div style="display:flex; flex-direction:column; gap:10px; max-width:850px;">
+        <textarea id="rawConfirmation" rows="6" placeholder="Paste booking confirmation email or PDF extract here..." style="width:100%; padding:10px; border-radius:6px; background:#162438; color:#fff; border:1px solid #2a3a52; font-family:monospace; font-size:0.85rem; box-sizing:border-box;"></textarea>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <input type="email" id="clientEmail" placeholder="Client email (optional)" style="flex:1; padding:8px 12px; border-radius:6px; background:#162438; color:#fff; border:1px solid #2a3a52; font-size:0.85rem;" />
+          <button onclick="generateItinerary()" id="btnGen" style="background:#c8a96e; color:#060d1f; border:none; padding:9px 18px; border-radius:6px; font-weight:600; cursor:pointer;">Generate & Save Itinerary</button>
+        </div>
+        <div id="genResult" style="display:none; padding:12px; border-radius:6px; background:rgba(200,169,110,0.1); border:1px solid #c8a96e; margin-top:8px;"></div>
+      </div>
+    </section>
+    <script>
+    async function generateItinerary() {
+      const text = document.getElementById('rawConfirmation').value.trim();
+      const email = document.getElementById('clientEmail').value.trim();
+      const resDiv = document.getElementById('genResult');
+      const btn = document.getElementById('btnGen');
+      if (!text) { alert('Please paste confirmation text first.'); return; }
+      btn.disabled = true;
+      btn.innerText = 'Parsing with AI...';
+      try {
+        const res = await fetch('/api/itinerary/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_text: text, client_email: email, auto_save: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const portalUrl = '/itinerary/?token=' + data.token;
+          const shareUrl = data.share_url || (window.location.origin + portalUrl);
+          resDiv.style.display = 'block';
+          resDiv.innerHTML = '<strong>Success!</strong> Itinerary generated for <em>' + (data.itinerary?.client?.leadGuest || 'Guest') + '</em> (' + (data.itinerary?.booking?.ship || 'Ship') + ')<br />' +
+            'Client Portal URL: <a href="' + portalUrl + '" target="_blank" style="color:#c8a96e; font-weight:bold;">' + shareUrl + '</a><br />' +
+            '<button onclick="navigator.clipboard.writeText(\\'' + shareUrl + '\\'); alert(\\'Copied to clipboard!\\');" style="margin-top:8px; padding:6px 12px; border-radius:4px; border:none; background:#c8a96e; color:#060d1f; font-weight:600; cursor:pointer;">Copy Client Link</button>' +
+            ' <button onclick="window.location.reload();" style="margin-left:10px; padding:6px 12px; border-radius:4px; border:1px solid #2a3a52; background:#162438; color:#fff; cursor:pointer;">Refresh Table</button>';
+        } else {
+          alert('Error: ' + (data.detail || 'Failed to parse confirmation.'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Generate & Save Itinerary';
+      }
+    }
+    </script>
+    """
 
     leads_table = _table(
         "Booking leads",
@@ -125,7 +193,7 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
         f"<meta name='viewport' content='width=device-width, initial-scale=1'>"
         f"<title>Horizon Voyages — Admin</title><style>{_STYLE}</style></head><body>"
         f"<h1>Horizon Voyages — Admin</h1>"
-        f"<p class='sub'>Captured leads and consultation inquiries.</p>"
-        f"{callbacks_table}{leads_table}{inquiries_table}</body></html>"
+        f"<p class='sub'>Captured leads, active itineraries, and consultation inquiries.</p>"
+        f"{generator_html}{itins_table}{callbacks_table}{leads_table}{inquiries_table}</body></html>"
     )
     return HTMLResponse(content=page)
