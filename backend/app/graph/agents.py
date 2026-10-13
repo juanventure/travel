@@ -16,6 +16,23 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
 # the model can pause generation and request a live web search.
 inventory_llm = llm.bind_tools([SEARCH_LIVE_CRUISES_SCHEMA])
 
+# Appended to EVERY agent prompt. Prompts are the soft layer; app/guardrails.py
+# enforces the same rules in code (links and prices are stripped regardless).
+COMPLIANCE_RULES = (
+    "\n\nCOMPLIANCE RULES (always apply):\n"
+    "1. Never state, estimate or hint at prices, fares, deals, discounts or dollar "
+    "amounts for any cruise or cabin, and never share commission, compensation or "
+    "host-agency rates. If asked about price, cost or how the advisor is paid, say "
+    "your Horizon Voyages advisor will cover that personally.\n"
+    "2. Never give out website addresses, links, or the names of other sites or "
+    "agencies where the guest could book or compare prices. Never suggest booking "
+    "anywhere else or on their own. Every booking goes through their Horizon "
+    "Voyages advisor.\n"
+    "3. Always steer toward the next step with the advisor: share their name and "
+    "email (say 'book'), request a call back, or use the consultation form on this "
+    "page. Say 'your advisor' rather than naming the host agency."
+)
+
 def router_node(state: AgentState):
     """
     Analyzes the latest message and decides the next agent.
@@ -56,6 +73,7 @@ async def consultation_node(state: AgentState):
         "you plan your journey.' Never invent a personal name or use a placeholder such "
         "as '[Your Name]'. Use warm, collective 'we' phrasing. Do not search for "
         "specific inventory; just answer questions or ask where they would like to go."
+        + COMPLIANCE_RULES
     ))
     response = await llm.ainvoke([sys_msg] + state["messages"])
     return {"messages": [response]}
@@ -64,31 +82,29 @@ async def inventory_node(state: AgentState):
     today = datetime.now().strftime("%B %d, %Y")
     sys_msg = SystemMessage(content=(
         "You are the Inventory Agent for Horizon Voyages. Today's date is "
-        f"{today}. Use the search_live_cruises tool to find real, current sailings "
-        "and cruise-line pages for what the guest is looking for. You need a "
+        f"{today}. Use the search_live_cruises tool to research real, current "
+        "sailings for what the guest is looking for. You need a "
         "destination, a month and a year before searching: if the guest gives a "
         "month without a year, use the next upcoming occurrence of that month; if "
         "the destination or month is missing, ask for it instead of guessing. Only "
         "set cruise_line if the guest named one.\n\n"
-        "The tool returns JSON: {\"ok\", \"results\": [{\"title\", \"url\", "
-        "\"snippet\"}]} or {\"ok\": false, \"message\"}. Base your answer ONLY on "
-        "those results. In warm, concise natural language, summarise the most "
-        "relevant sailings or itineraries (ship, cruise line, nights, dates, ports) "
-        "when the snippets state them, and never invent details they don't. "
-        "SOURCES ARE REQUIRED: after your summary, add a 'Sources:' list with one "
-        "line per result you used, formatted exactly as 'Title - https://full-url', "
-        "using the URL strings from the tool result verbatim. Plain text only — no "
-        "markdown, no angle brackets — so the links are clickable. Never make up or "
-        "alter a URL.\n\n"
-        "Do NOT quote specific prices, fares, or dollar amounts, even if a snippet "
-        "contains one. Cruise pricing changes until a deposit is placed, so instead "
-        "let the guest know their dedicated Horizon Voyages advisor will provide "
-        "current, personalized pricing — and warmly invite them to share their name "
-        "and email (or say 'book') so we can follow up with a tailored quote. "
+        "The tool returns JSON: {\"ok\", \"results\": [{\"title\", \"snippet\"}]} or "
+        "{\"ok\": false, \"message\"}. It is background research for you — it has no "
+        "links or prices by design. Base your answer ONLY on those results. In warm, "
+        "concise natural language, summarise the most relevant sailings or "
+        "itineraries (cruise line, ship, nights, dates, ports) when the snippets "
+        "state them, and never invent details they don't. Offer two or three "
+        "options at most.\n\n"
+        "Finish every answer by inviting the guest to have their Horizon Voyages "
+        "advisor price and book the one they like: ask them to share their name and "
+        "email (or say 'book'), or offer a call back or the consultation form. "
+        "Their advisor will provide current, personalized pricing and handle the "
+        "booking.\n\n"
         "If the tool reports an error, a past date, or no results, say so politely "
         "(for a past date, ask for a future one) and offer to connect them with an "
         "advisor or the consultation form instead. Never present these results as "
         "something Horizon Voyages has reserved or can guarantee."
+        + COMPLIANCE_RULES
     ))
     
     # We invoke the tool-bound LLM. If it emits a tool call, the graph routes to
@@ -138,12 +154,17 @@ async def booking_node(state: AgentState):
     sys_msg = SystemMessage(content=(
         "You are the Reservation Request Agent for Horizon Voyages. Gather the "
         "details an advisor needs to price and hold a sailing: the guest's full "
-        "name, email, the cruise ID they want, the number of passengers, their "
+        "name, email, the sailing they want, the number of passengers, their "
         "preferred cruise length (in nights), and their preferred travel dates or "
-        "date range. Ask for whichever are still missing — it's fine to collect "
+        "date range. For 'the sailing', use a short plain-language description of "
+        "what they chose — cruise line, ship or itinerary, destination and month/"
+        "year (for example 'Celebrity Edge, 7-night Eastern Caribbean, July 2027'); "
+        "if they mention a voyage ID like VOY-123, use that. Ask for whichever are "
+        "still missing — it's fine to collect "
         "them over a few messages, one or two at a time. Once you have at least "
-        "the full name, email, and cruise ID, YOU MUST call the "
-        "submit_booking_lead tool, passing everything you've collected "
+        "the full name, email, and the sailing, YOU MUST call the "
+        "submit_booking_lead tool, passing the sailing description as cruise_id and "
+        "everything else you've collected "
         "(including passengers, cruise length, and travel dates when known).\n\n"
         "Hard rules. You are collecting a reservation REQUEST, not taking a "
         "booking. Never state or imply that a cabin is held, reserved, or "
@@ -152,6 +173,7 @@ async def booking_node(state: AgentState):
         "link — Horizon Voyages does not collect payment. When a guest is ready "
         "to deposit, their advisor books it with the cruise line and the guest "
         "pays the cruise line directly. If asked about paying, say exactly that."
+        + COMPLIANCE_RULES
     ))
     booking_llm = llm.bind_tools([submit_booking_lead])
     response = await booking_llm.ainvoke([sys_msg] + state["messages"])
@@ -171,11 +193,15 @@ async def booking_node(state: AgentState):
 
             full_name = args.get("full_name", "")
             email = args.get("email", "")
-            cruise_id = args.get("cruise_id", "")
+            sailing = (args.get("cruise_id") or "").strip()
             num_passengers = args.get("num_passengers")
             cruise_length = args.get("cruise_length")
             travel_dates = args.get("travel_dates")
-            details = get_cruise_details(cruise_id)
+            # A known mock ID gets its formatted details; otherwise the guest's
+            # plain-language sailing description IS the details. cruise_id is a
+            # VARCHAR(64) column, so store a truncated copy there.
+            details = get_cruise_details(sailing) or sailing or None
+            cruise_id = sailing[:64]
 
             # 2. Persist the lead BEFORE emailing, so it is never lost even if the
             #    email fails. Soft-fails (returns None) if the DB is unavailable.
@@ -196,7 +222,7 @@ async def booking_node(state: AgentState):
             # 3. Confirm truthfully: only promise advisor follow-up if it was sent.
             #    Built without an LLM call to save Gemini API quota.
             first_name = full_name.split()[0] if full_name.strip() else "there"
-            voyage = cruise_id or "your selected voyage"
+            voyage = sailing or "your selected voyage"
             if sent:
                 final_text = (
                     f"Wonderful, {first_name} — I've passed your request for {voyage} to "

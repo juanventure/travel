@@ -101,9 +101,24 @@ consumers book through your Partner Booking Link, you receive full
 commission"), which covers Royal Caribbean, Celebrity and Silversea from a
 single portal.
 
-- [ ] **3a. Confirm PBL is permitted under the host's IATA** — ask Fora directly
-      whether advisors may deploy Partner Booking Links, and how attribution and
-      the commission split flow back. **Blocks everything else in this phase.**
+- [x] **3a. Confirm PBL is permitted under the host's IATA** — **Answered by
+      Fora (Merritt, Membership, 2026-09-16):** yes, as long as everything is
+      tied to Fora's IATA#. A booking made through your link/quote, or by you on
+      the guest's behalf, either loads automatically or is submitted in Fora's
+      Portal. Portal access to the IATA# comes after joining + a brief ID
+      verification. *Still unanswered:* whether PBL bookings count toward
+      commission tiers / the CLIA card threshold.
+
+      **Link policy (2026-10-13).** Fora also allows the AI assistant provided it
+      never shares Fora fares or commissions with clients. And a guest handed any
+      third-party booking link can book around the advisor (no commission, not
+      under the Fora IATA#). So the chatbot gives out **no outbound links** except
+      an allowlist (own site + Calendly, `OUTBOUND_LINK_ALLOWLIST`), enforced in
+      code (`app/guardrails.py`): search results reach the model as titles +
+      snippets only, with URLs and dollar amounts stripped; every outbound
+      message is link-filtered; prompts steer every conversation to the advisor.
+      The only booking link that may ever be added to the allowlist is a Fora-
+      attributed Partner Booking Link (3e/3f).
 - [ ] **3b. Per-line attribution audit** — for each line we build for, confirm
       with the BDM that a consumer-facing attributed booking link exists and get
       the URL format. Confirmed so far: Royal Caribbean Group (CruisingPower).
@@ -216,10 +231,14 @@ booking_leads   (advisor flow)         sailings (self-serve flow)
 4. ~~Deposit vs. full payment for self-serve; refund/cancellation policy.~~
    **Moot 2026-09-08** — we take no payment. Deposit terms, refunds and
    cancellation are the cruise line's, governed by their contract of carriage.
-5. **Open — confirm with Fora before Phase 3:** (a) may advisors deploy Partner
-   Booking Links under the host IATA, and how does attribution reach us;
-   (b) what disclosure the site must carry about the host relationship;
-   (c) any restrictions on advertising fares or promotions on our own site.
+5. **Partly answered 2026-09-16 (see 3a).** Fora: (a) PBLs allowed if tied to
+   Fora's IATA#; (b) disclosure — say you're affiliated with Fora *somewhere on
+   the site* (done: footer + legal pages); their registration covers your SOT via
+   a form after joining; (c) AI assistant allowed if it never shares Fora fares
+   or commissions. **Still open — ask in writing:** literal disclosure wording;
+   whether Fora wants to review the AI assistant / any required AI disclosure;
+   whether PBL bookings count toward commission tiers and the CLIA card
+   threshold; any restrictions on advertising fares or promotions on our own site.
 6. ~~Hosting target (simple PaaS vs. full AWS per README).~~ **Decided
    2026-06-16:** Cloudflare Pages + Render + Neon + Upstash (see Phase 5 / `docs/deploy.md`).
 

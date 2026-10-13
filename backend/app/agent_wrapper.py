@@ -3,6 +3,8 @@ from langchain_core.messages import HumanMessage
 import json
 from typing import AsyncGenerator
 
+from app.guardrails import strip_links
+
 async def simulate_agent_thought_process(session_id: str, message: str) -> AsyncGenerator[str, None]:
     """
     Invokes the LangGraph Multi-Agent architecture and yields SSE-formatted strings.
@@ -50,6 +52,11 @@ async def simulate_agent_thought_process(session_id: str, message: str) -> Async
             return None
         if msg_id is not None:
             emitted_ids.add(msg_id)
+        # Commission protection: never let a third-party booking link (or any
+        # non-allowlisted URL/domain) reach the guest, whatever the model wrote.
+        text = strip_links(text)
+        if not text.strip():
+            return None
         return f"data: {json.dumps({'type': 'message', 'content': text})}\n\n"
 
     # We use astream_events to get granular updates

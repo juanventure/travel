@@ -6,6 +6,8 @@ from typing import Optional
 import httpx
 from langchain_core.tools import tool
 
+from app.guardrails import scrub_prices, strip_links
+
 # Mock in-memory GDS database
 MOCK_GDS = [
     {
@@ -112,8 +114,8 @@ _MONTH_NAMES = [
 SEARCH_LIVE_CRUISES_SCHEMA = {
     "name": "search_live_cruises",
     "description": (
-        "Search the live web for real cruise sailings, itineraries and cruise-line "
-        "pages for a destination in a specific month and year. Call this whenever "
+        "Search the live web for real cruise sailings and itineraries for a "
+        "destination in a specific month and year. Call this whenever "
         "the guest asks to find, search for or look up cruises. Do not call it "
         "until the destination, month and year are all known."
     ),
@@ -152,6 +154,24 @@ TAVILY_URL = "https://api.tavily.com/search"
 MAX_RESULTS = 5
 SNIPPET_CHARS = 500  # keep tool output small so it doesn't bloat the LLM context
 
+# Online travel agencies and discount cruise sellers: competitors for the sale,
+# and their pages are mostly fares + "book now". Override with
+# CRUISE_SEARCH_EXCLUDE_DOMAINS (comma-separated). Optionally pin results to
+# specific sites with CRUISE_SEARCH_INCLUDE_DOMAINS.
+_DEFAULT_EXCLUDE = (
+    "expedia.com,kayak.com,priceline.com,travelocity.com,orbitz.com,cheaptickets.com,"
+    "cruise.com,cruises.com,cruisedirect.com,vacationstogo.com,cruisesonly.com,"
+    "icruise.com,cruiseplum.com,costco.com,cruisecompete.com,cruisesheet.com"
+)
+
+
+def _env_list(name: str, default: str = "") -> list:
+    return [d.strip() for d in os.getenv(name, default).split(",") if d.strip()]
+
+
+_EXCLUDE_DOMAINS = _env_list("CRUISE_SEARCH_EXCLUDE_DOMAINS", _DEFAULT_EXCLUDE)
+_INCLUDE_DOMAINS = _env_list("CRUISE_SEARCH_INCLUDE_DOMAINS")
+
 
 def _error(code: str, message: str) -> str:
     """Errors are returned AS DATA so the LLM can explain them to the guest."""
@@ -163,7 +183,8 @@ async def search_live_cruises(destination: str, month: str, year: int,
                               cruise_line: Optional[str] = None) -> str:
     """
     Call the live search API with the model-extracted parameters and return a
-    JSON string: {"ok": true, "query", "results": [{"title","url","snippet"}]}.
+    JSON string: {"ok": true, "query", "results": [{"title","snippet"}]} — no
+    URLs and no prices by design (see the PARSE step).
     Never raises — failures come back as {"ok": false, ...}.
     """
     api_key = os.getenv("TAVILY_API_KEY")
@@ -197,7 +218,10 @@ async def search_live_cruises(destination: str, month: str, year: int,
         "search_depth": "basic",
         "max_results": MAX_RESULTS,
         "include_answer": False,
+        "exclude_domains": _EXCLUDE_DOMAINS,
     }
+    if _INCLUDE_DOMAINS:
+        payload["include_domains"] = _INCLUDE_DOMAINS
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
@@ -213,20 +237,29 @@ async def search_live_cruises(destination: str, month: str, year: int,
         print(f"[search] request failed: {exc!r}")
         return _error("unavailable", "The live search service could not be reached.")
 
-    # 3. PARSE — reduce the raw API response to just what the LLM needs.
+    # 3. PARSE — reduce the raw API response to research the LLM can summarise.
+    #    COMMISSION PROTECTION: URLs are deliberately NOT passed to the model. A
+    #    third-party booking link would let a guest book around the advisor (no
+    #    commission, not tied to Fora's IATA#). Prices are scrubbed too, so fares
+    #    can't be relayed. URLs are only logged server-side.
     results = []
     for r in data.get("results", [])[:MAX_RESULTS]:
         url = r.get("url")
         if not url:
             continue
+        print(f"[search] source: {url}")
         results.append({
-            "title": (r.get("title") or url).strip(),
-            "url": url,
-            "snippet": (r.get("content") or "").strip()[:SNIPPET_CHARS],
+            "title": scrub_prices(strip_links((r.get("title") or "").strip())),
+            "snippet": scrub_prices(strip_links((r.get("content") or "").strip()))[:SNIPPET_CHARS],
         })
 
     print(f"[search] '{query}' -> {len(results)} result(s)")
     if not results:
         return json.dumps({"ok": True, "query": query, "results": [],
                            "message": "No live results found."})
-    return json.dumps({"ok": True, "query": query, "results": results})
+    return json.dumps({
+        "ok": True, "query": query, "results": results,
+        "note": ("Research only. Links and prices are intentionally omitted — do "
+                 "not mention websites, links or prices. Route the guest to their "
+                 "Horizon Voyages advisor."),
+    })
