@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advisor Portal — Horizon Voyages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-bg: #060d1f;
+      --navy-card: #0d172e;
+      --navy-border: rgba(200, 169, 110, 0.25);
+      --gold: #c8a96e;
+      --gold-light: #dfc38d;
+      --gold-dark: #a8894e;
+      --text: #e8eef6;
+      --muted: #8e9db7;
+      --success: #22c55e;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--navy-bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid var(--navy-border);
+      background: rgba(6, 13, 31, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand svg {
+      width: 28px;
+      height: 28px;
+      color: var(--gold);
+    }
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-left: 8px;
+      border-left: 1px solid var(--navy-border);
+      padding-left: 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--success);
+    }
+    .badge-status.offline {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--gold); }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .hero-banner {
+      margin-bottom: 32px;
+    }
+    .hero-banner h1 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .hero-banner p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--navy-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--gold-light);
+    }
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .form-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    textarea, input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      background: #081124;
+      border: 1px solid rgba(200, 169, 110, 0.3);
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.15);
+    }
+    textarea {
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: #060d1f;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(200, 169, 110, 0.25);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+    }
+    .btn-secondary:hover {
+      background: rgba(200, 169, 110, 0.1);
+      box-shadow: none;
+    }
+
+    /* Result Banner */
+    .result-box {
+      display: none;
+      background: rgba(200, 169, 110, 0.08);
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      padding: 24px;
+      margin-top: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .result-header svg {
+      color: var(--gold);
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .result-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      color: #fff;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+    }
+    .result-item {
+      background: #081124;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .result-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .result-item strong {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .link-share-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .share-url-input {
+      font-family: 'Consolas', monospace;
+      color: var(--gold-light);
+      background: #050a17;
+      font-size: 0.88rem;
+    }
+
+    /* Itineraries List */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    th {
+      color: var(--gold);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .token-pill {
+      font-family: monospace;
+      font-size: 0.78rem;
+      background: rgba(200, 169, 110, 0.12);
+      color: var(--gold);
+      padding: 3px 7px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .token-pill:hover {
+      background: rgba(200, 169, 110, 0.25);
+    }
+
+    .sample-btn {
+      font-size: 0.78rem;
+      color: var(--gold);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    footer {
+      border-top: 1px solid var(--navy-border);
+      padding: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+        <path d="M2 12h20"/>
+      </svg>
+      <div>
+        <span class="brand-title">Horizon Voyages</span>
+        <span class="brand-subtitle">Advisor Portal</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="badge-status" id="backendBadge">
+        <span class="status-dot"></span>
+        <span id="backendStatusText">Checking API...</span>
+      </div>
+      <a href="index.html" class="nav-link">Main Site ↗</a>
+      <a href="itinerary/" class="nav-link">Sample Itinerary ↗</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-banner">
+      <h1>Advisor Itinerary Command Center</h1>
+      <p>Transform raw cruise line confirmation emails or supplier PDFs into bespoke, offline-ready client digital portals in seconds.</p>
+    </div>
+
+    <!-- Generator Card -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">AI Cruise Confirmation Parser</h2>
+          <p class="card-subtitle">Works with Norwegian, Carnival, Celebrity, Royal Caribbean, Virgin Voyages, Princess &amp; more.</p>
+        </div>
+        <button type="button" class="sample-btn" id="btnLoadSample">Insert sample NCL confirmation</button>
+      </div>
+
+      <form id="parseForm">
+        <div class="form-group">
+          <label class="form-label" for="rawConfirmation">Paste Confirmation Email or PDF Text</label>
+          <textarea id="rawConfirmation" rows="8" placeholder="Paste the confirmation email from Norwegian, Carnival, Celebrity, etc. here..."></textarea>
+          <p class="form-hint">The AI parser extracts the lead passenger, stateroom number, ship, sail dates, day-by-day port times, and packages automatically.</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label" for="clientEmail">Client Email (Optional)</label>
+            <input type="email" id="clientEmail" placeholder="client@example.com (for agency records)" />
+          </div>
+          <button type="submit" class="btn" id="btnSubmit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+            <span id="btnSubmitText">Generate &amp; Issue Itinerary</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Result Banner -->
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <h3 id="resultVoyageTitle">Curated Voyage Generated</h3>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-item">
+            <span>Primary Traveler</span>
+            <strong id="resClient">Sarah &amp; David Jenkins</strong>
+          </div>
+          <div class="result-item">
+            <span>Vessel &amp; Cruise Line</span>
+            <strong id="resShip">Norwegian Prima</strong>
+          </div>
+          <div class="result-item">
+            <span>Stateroom</span>
+            <strong id="resStateroom">Suite #12204</strong>
+          </div>
+          <div class="result-item">
+            <span>Sail Dates / Days</span>
+            <strong id="resDates">Nov 14, 2026 (8 Days)</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Client Portal URL (Share with Traveler)</label>
+          <div class="link-share-bar">
+            <input type="text" id="resShareUrl" class="share-url-input" readonly />
+            <button type="button" class="btn" id="btnCopyLink">Copy Link</button>
+            <a id="btnPreviewLink" href="#" target="_blank" class="btn btn-secondary">Open Portal ↗</a>
+          </div>
+          <p class="form-hint" style="color:var(--gold-light);">✦ This link gives your client private read-only access with live embarkation countdown, port guides, and offline sync at sea.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Itineraries List -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Recent Client Itineraries</h2>
+          <p class="card-subtitle">Active client voyages stored in database.</p>
+        </div>
+        <button type="button" class="btn btn-secondary" id="btnRefreshList" style="padding: 6px 14px; font-size: 0.8rem;">Refresh List</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="itinsTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Lead Guest</th>
+              <th>Cruise Line &amp; Ship</th>
+              <th>Sail Date</th>
+              <th>Client Portal</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="itinsTableBody">
+            <tr>
+              <td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">Loading saved itineraries from backend...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Horizon Voyages — Private Advisor Command Center &copy; 2026. For authorized travel advisor use only.</p>
+  </footer>
+
+  <!-- Runtime Config -->
+  <script src="config.js"></script>
+  <script>
+    // Resolve Backend API Base
+    const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE)
+      ? window.APP_CONFIG.API_BASE
+      : ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8000'
+        : '');
+
+    // Sample NCL confirmation for 1-click test
+    const SAMPLE_NCL = `NORWEGIAN CRUISE LINE - RESERVATION CONFIRMATION
+Guest Name: Sarah & David Jenkins
+Reservation Number: NCL-9842104
+Vessel: Norwegian Prima
+Stateroom: Club Balcony Suite #12204
+Sail Date: November 14, 2026 to November 21, 2026
+Duration: 7-Night Western Caribbean
+Embarkation Port: Port of Miami, FL (Terminal B)
+Boarding Window: 12:00 PM - 02:30 PM
+Disembarkation Port: Port of Miami, FL
+
+Itinerary:
+Day 1 - Miami, Florida (Departs 4:00 PM)
+Day 2 - At Sea (Cruising)
+Day 3 - Cozumel, Mexico (8:00 AM - 6:00 PM)
+Day 4 - Harvest Caye, Belize (NCL Private Island) (8:00 AM - 5:00 PM)
+Day 5 - Roatan, Bay Islands, Honduras (8:00 AM - 5:00 PM)
+Day 6 - Costa Maya, Mexico (8:00 AM - 5:00 PM)
+Day 7 - At Sea (Cruising)
+Day 8 - Miami, Florida (Arrives 7:00 AM)
+
+Included Amenities:
+- Free at Sea Premium Beverage Package
+- Speciality Dining Package (3 Nights)
+- 250 Minutes High Speed Wi-Fi
+- $100 Shore Excursion Credit per Port
+- Prepaid Daily Gratuities`;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkBackendHealth();
+      fetchItineraries();
+
+      document.getElementById('btnLoadSample').addEventListener('click', () => {
+        document.getElementById('rawConfirmation').value = SAMPLE_NCL;
+        document.getElementById('clientEmail').value = 'sarah.jenkins@example.com';
+      });
+
+      document.getElementById('parseForm').addEventListener('submit', handleParseSubmit);
+      document.getElementById('btnCopyLink').addEventListener('click', copyShareLink);
+      document.getElementById('btnRefreshList').addEventListener('click', fetchItineraries);
+    });
+
+    async function checkBackendHealth() {
+      const badge = document.getElementById('backendBadge');
+      const text = document.getElementById('backendStatusText');
+      try {
+        const res = await fetch(`${API_BASE}/healthz`, { method: 'GET' });
+        if (res.ok) {
+          badge.className = 'badge-status';
+          text.textContent = 'API Connected';
+        } else {
+          badge.className = 'badge-status offline';
+          text.textContent = 'Backend Offline';
+        }
+      } catch (err) {
+        badge.className = 'badge-status offline';
+        text.textContent = 'Backend Offline';
+      }
+    }
+
+    async function handleParseSubmit(e) {
+      e.preventDefault();
+      const rawText = document.getElementById('rawConfirmation').value.trim();
+      const clientEmail = document.getElementById('clientEmail').value.trim();
+      const btn = document.getElementById('btnSubmit');
+      const btnText = document.getElementById('btnSubmitText');
+
+      if (!rawText) {
+        alert('Please paste the cruise confirmation text before submitting.');
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.textContent = 'Parsing with AI...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/itinerary/parse`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            raw_text: rawText,
+            client_email: clientEmail || null,
+            auto_save: true
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          renderResult(data);
+          fetchItineraries();
+        } else {
+          alert('Failed to parse confirmation: ' + (data.detail || 'Unknown error occurred.'));
+        }
+      } catch (err) {
+        alert('Network request to backend failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Generate & Issue Itinerary';
+      }
+    }
+
+    function renderResult(data) {
+      const box = document.getElementById('resultBox');
+      const itin = data.itinerary;
+      const client = itin.client || {};
+      const booking = itin.booking || {};
+
+      document.getElementById('resultVoyageTitle').textContent = itin.title || 'Curated Voyage';
+      document.getElementById('resClient').textContent = client.leadGuest || 'Guest';
+      document.getElementById('resShip').textContent = `${booking.cruiseLine || ''} — ${booking.ship || ''}`;
+      document.getElementById('resStateroom').textContent = booking.stateroom || 'Confirmed Cabin';
+      document.getElementById('resDates').textContent = `${booking.embarks?.date || 'Upcoming'} (${itin.days?.length || 0} Days)`;
+
+      // Share URL
+      const shareUrl = data.share_url || `${window.location.origin}/itinerary/?token=${data.token}`;
+      document.getElementById('resShareUrl').value = shareUrl;
+      document.getElementById('btnPreviewLink').href = `itinerary/?token=${data.token}`;
+
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function copyShareLink() {
+      const input = document.getElementById('resShareUrl');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value).then(() => {
+        const copyBtn = document.getElementById('btnCopyLink');
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = orig, 2000);
+      });
+    }
+
+    async function fetchItineraries() {
+      const tbody = document.getElementById('itinsTableBody');
+      try {
+        const res = await fetch(`${API_BASE}/api/itinerary/list/all`);
+        if (res.ok) {
+          const list = await res.json();
+          if (list && list.length > 0) {
+            tbody.innerHTML = list.map(item => `
+              <tr>
+                <td>#${item.id}</td>
+                <td><strong>${escapeHtml(item.client_name || 'Guest')}</strong></td>
+                <td>${escapeHtml(item.cruise_line || '')} ${escapeHtml(item.ship_name ? '— ' + item.ship_name : '')}</td>
+                <td>${escapeHtml(item.sail_date || '—')}</td>
+                <td>
+                  <a href="itinerary/?token=${encodeURIComponent(item.token)}" target="_blank" class="token-pill">
+                    <span>${item.token.substring(0, 8)}…</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </td>
+                <td style="color:var(--muted); font-size:0.78rem;">${item.created_at ? item.created_at.substring(0, 10) : '—'}</td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">No custom itineraries generated yet. Paste a confirmation above to create the first one!</td></tr>';
+          }
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">Could not retrieve list from server. (Backend database may be offline).</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">Backend connection offline.</td></tr>';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
