@@ -1,8 +1,11 @@
 # Host agency switch: Outside Agents → Fora
 
-Status: **planned, not executed.** Horizon Voyages is currently hosted through
-Outside Agents, and the live site correctly says so. Nothing in this document
-should be applied until the Fora advisor agreement is signed and active.
+Status: **website switched to Fora on 2026-10-13** (§1 done: `index.html`,
+`terms.html`, `privacy.html`, with the legal pages' "Last updated" dates bumped).
+**Still open:** §2 registration numbers (none displayed — don't add one until
+Fora confirms it in writing), §3 host-dependent "exclusive" claims, and §4
+off-site properties (cruise line portals, Calendly, Travefy, social bios, etc.).
+Below, the "Current" columns show the pre-switch Outside Agents wording.
 
 The failure mode to avoid is a gap — a period where the site names a host that
 isn't yours yet, or names none at all. Everything here flips on one day.
