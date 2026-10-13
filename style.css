@@ -548,6 +548,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   border: 1px solid var(--border);
   color: var(--muted);
 }
+.itin-portal-note,
 .itin-travefy-note {
   display: flex;
   align-items: center;
@@ -560,9 +561,13 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   margin: 0 auto;
   text-align: left;
 }
+.portal-icon,
 .travefy-icon { color: var(--gold); flex-shrink: 0; line-height: 0; }
+.portal-icon svg,
 .travefy-icon svg { width: 34px; height: 34px; }
+.itin-portal-note p,
 .itin-travefy-note p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
+.itin-portal-note strong,
 .itin-travefy-note strong { color: var(--gold-light); }
 
 /* =============================================

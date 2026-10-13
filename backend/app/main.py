@@ -19,6 +19,7 @@ from app.notifications import (
     send_callback_telegram,
 )
 from app.admin import router as admin_router
+from app.itinerary_router import router as itinerary_router
 from app.db import (
     init_db, save_consultation, mark_consultation_emailed,
     save_callback_request, mark_callback_notified,
@@ -70,6 +71,7 @@ app.add_middleware(
 
 
 app.include_router(admin_router)
+app.include_router(itinerary_router)
 
 
 @app.get("/healthz")

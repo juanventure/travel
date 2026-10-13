@@ -1,0 +1,15 @@
+{
+  "name": "Horizon Voyages - Digital Itinerary",
+  "short_name": "Voyage Plan",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#060d1f",
+  "theme_color": "#060d1f",
+  "icons": [
+    {
+      "src": "assets/advisor_portrait.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

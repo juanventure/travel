@@ -1,0 +1,1597 @@
+/* ==========================================================================
+   HORIZON VOYAGES — BESPOKE DIGITAL ITINERARY PLATFORM
+   Luxury Nautical Palette & Responsive Layout
+   ========================================================================== */
+
+:root {
+  --navy:         #060d1f;
+  --navy-dark:    #030711;
+  --navy-mid:     #0c1a36;
+  --navy-light:   #152449;
+  --navy-card:    rgba(12, 26, 54, 0.85);
+  --navy-card-hover: rgba(21, 36, 73, 0.95);
+  --gold:         #c8a96e;
+  --gold-light:   #e0c99a;
+  --gold-dim:     #8a7148;
+  --gold-border:  rgba(200, 169, 110, 0.25);
+  --gold-glow:    rgba(200, 169, 110, 0.15);
+  --cream:        #f8f4ee;
+  --cream-soft:   #ece6dc;
+  --muted:        rgba(248, 244, 238, 0.65);
+  --muted-dark:   rgba(248, 244, 238, 0.4);
+  --white:        #ffffff;
+  --green:        #4ade80;
+  --blue:         #38bdf8;
+  --radius-sm:    8px;
+  --radius-md:    16px;
+  --radius-lg:    24px;
+  --shadow-sm:    0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.55);
+  --trans:        0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-serif:   'Cormorant Garamond', Georgia, serif;
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Reset & Baseline ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  background-color: var(--navy);
+}
+
+body {
+  background: radial-gradient(circle at 50% 0%, var(--navy-mid) 0%, var(--navy) 50%, var(--navy-dark) 100%);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ── Top Navigation Bar ── */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(6, 13, 31, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--gold-border);
+  transition: var(--trans);
+}
+
+.top-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-crest {
+  width: 32px;
+  height: 32px;
+  color: var(--gold);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cream);
+  font-weight: 500;
+}
+
+.brand-portal {
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  border: 1px solid var(--gold-border);
+  background: rgba(200, 169, 110, 0.08);
+  color: var(--cream);
+  transition: var(--trans);
+}
+
+.btn-icon:hover {
+  background: var(--gold);
+  color: var(--navy-dark);
+  border-color: var(--gold);
+}
+
+.btn-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.badge-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge-offline .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+/* ── Hero Section ── */
+.itinerary-hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: flex-end;
+  padding: 80px 0 40px;
+  background-size: cover;
+  background-position: center 35%;
+  border-bottom: 1px solid var(--gold-border);
+  overflow: hidden;
+}
+
+.itinerary-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 13, 31, 0.4) 0%,
+    rgba(6, 13, 31, 0.75) 50%,
+    rgba(6, 13, 31, 0.98) 100%
+  );
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.client-exclusive-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  background: rgba(12, 26, 54, 0.75);
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-border);
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 650px;
+  margin-bottom: 28px;
+}
+
+/* ── Live Countdown Strip ── */
+.countdown-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  background: var(--navy-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.countdown-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.countdown-units {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.countdown-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-number {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--cream);
+}
+
+.countdown-tag {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.countdown-divider {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--gold-dim);
+}
+
+/* ── Voyage Quick Summary Cards ── */
+.voyage-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.highlight-card {
+  background: var(--navy-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: var(--trans);
+}
+
+.highlight-card:hover {
+  background: var(--navy-card-hover);
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.highlight-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(200, 169, 110, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.highlight-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.highlight-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.highlight-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.highlight-val {
+  font-size: 0.92rem;
+  color: var(--cream);
+  font-weight: 400;
+}
+
+/* ── Sticky Sub-Navigation Tabs ── */
+.portal-nav {
+  position: sticky;
+  top: 68px;
+  z-index: 90;
+  background: rgba(6, 13, 31, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gold-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 10px 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  transition: var(--trans);
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  color: var(--navy-dark);
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 500;
+}
+
+.tab-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Main Layout ── */
+.portal-body {
+  padding: 40px 0 80px;
+  min-width: 0;
+  width: 100%;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 36px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.itinerary-column {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Day Selector Chips (Scrollable) ── */
+.day-selector-wrap {
+  margin-bottom: 30px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.day-selector-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-chips {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-border) transparent;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.day-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 14px;
+  background: var(--navy-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  transition: var(--trans);
+  min-width: 110px;
+  cursor: pointer;
+}
+
+.day-chip:hover {
+  border-color: var(--gold);
+  background: var(--navy-card-hover);
+}
+
+.day-chip.active {
+  background: linear-gradient(135deg, rgba(200, 169, 110, 0.2), rgba(12, 26, 54, 0.9));
+  border-color: var(--gold-light);
+  box-shadow: 0 0 15px var(--gold-glow);
+}
+
+.day-chip-num {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.day-chip-port {
+  font-size: 0.85rem;
+  color: var(--cream);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* ── Day Card & Timeline ── */
+.day-card {
+  background: var(--navy-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 28px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--trans);
+}
+
+.day-card:hover {
+  border-color: rgba(200, 169, 110, 0.45);
+}
+
+.day-header {
+  padding: 22px 28px;
+  background: linear-gradient(135deg, rgba(200, 169, 110, 0.09) 0%, rgba(12, 26, 54, 0.6) 100%);
+  border-bottom: 1px solid var(--gold-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.day-header-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.day-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.day-number-badge {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--navy-dark);
+  background: var(--gold);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.day-date-str {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.day-port-name {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1.15;
+}
+
+.day-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-chip svg {
+  width: 14px;
+  height: 14px;
+  color: var(--gold);
+}
+
+/* ── Day Highlights & Tip ── */
+.day-body {
+  padding: 28px;
+}
+
+.day-highlight-banner {
+  background: rgba(200, 169, 110, 0.07);
+  border-left: 3px solid var(--gold);
+  padding: 14px 18px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 24px;
+  font-size: 0.92rem;
+  color: var(--cream);
+}
+
+/* ── Timeline Events ── */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+  margin-bottom: 24px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 11px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(200, 169, 110, 0.15) 100%);
+}
+
+.timeline-event {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-event:last-child {
+  margin-bottom: 0;
+}
+
+.event-dot {
+  position: absolute;
+  left: -32px;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--navy-mid);
+  border: 2px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+}
+
+.event-dot svg {
+  width: 12px;
+  height: 12px;
+}
+
+.event-content {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(200, 169, 110, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  transition: var(--trans);
+}
+
+.event-content:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(200, 169, 110, 0.3);
+}
+
+.event-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.event-time {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  letter-spacing: 0.06em;
+}
+
+.event-category-badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(200, 169, 110, 0.15);
+  color: var(--gold-light);
+}
+
+.event-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.event-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* ── Day Footer Details ── */
+.day-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(200, 169, 110, 0.15);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dress-code-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-border);
+}
+
+.advisor-tip {
+  font-size: 0.82rem;
+  color: var(--gold-light);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Sidebar (Advisor & Fast Actions) ── */
+.sidebar-sticky {
+  position: sticky;
+  top: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.advisor-card {
+  background: var(--navy-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.advisor-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.advisor-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.advisor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.advisor-info h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.advisor-info p {
+  font-size: 0.78rem;
+  color: var(--gold);
+}
+
+.advisor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-advisor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: var(--trans);
+}
+
+.btn-advisor-primary {
+  background: var(--gold);
+  color: var(--navy-dark);
+}
+
+.btn-advisor-primary:hover {
+  background: var(--gold-light);
+  transform: translateY(-2px);
+}
+
+.btn-advisor-secondary {
+  border: 1px solid var(--gold-border);
+  background: rgba(200, 169, 110, 0.08);
+  color: var(--cream);
+}
+
+.btn-advisor-secondary:hover {
+  background: rgba(200, 169, 110, 0.2);
+  border-color: var(--gold);
+}
+
+/* ── Amenities Card ── */
+.amenities-card {
+  background: var(--navy-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+
+.card-title {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--gold-light);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amenity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amenity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--cream);
+  line-height: 1.45;
+}
+
+.amenity-check {
+  color: var(--gold);
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Logistics Section (Flights, Hotel, Transfers) ── */
+.logistics-section {
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid var(--gold-border);
+}
+
+.section-heading-wrap {
+  margin-bottom: 28px;
+}
+
+.section-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--white);
+}
+
+.flight-card {
+  background: var(--navy-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.flight-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(200, 169, 110, 0.15);
+}
+
+.flight-direction {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.flight-conf {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.flight-route-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.flight-endpoint {
+  display: flex;
+  flex-direction: column;
+}
+
+.airport-code {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--cream);
+  line-height: 1;
+}
+
+.flight-time {
+  font-size: 0.88rem;
+  color: var(--gold-light);
+  font-weight: 500;
+}
+
+.flight-terminal {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.flight-path-graphic {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.flight-path-line {
+  width: 100%;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--gold), var(--gold) 6px, transparent 6px, transparent 12px);
+  margin-bottom: 6px;
+}
+
+.flight-icon-plane {
+  color: var(--gold);
+  transform: rotate(90deg);
+}
+
+.flight-meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--cream);
+}
+
+/* ── Pre-Cruise Hotel Card ── */
+.hotel-card {
+  background: var(--navy-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.hotel-name {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.hotel-loc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.hotel-perks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(200, 169, 110, 0.15);
+}
+
+.perk-item {
+  font-size: 0.82rem;
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Documents Vault ── */
+.doc-vault-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.doc-card {
+  background: var(--navy-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: var(--trans);
+}
+
+.doc-card:hover {
+  background: var(--navy-card-hover);
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.doc-info h4 {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.doc-info p {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.doc-btn {
+  color: var(--gold);
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(200, 169, 110, 0.1);
+  transition: var(--trans);
+}
+
+.doc-btn:hover {
+  background: var(--gold);
+  color: var(--navy-dark);
+}
+
+/* ── Footer ── */
+.portal-footer {
+  border-top: 1px solid var(--gold-border);
+  padding: 40px 0;
+  background: var(--navy-dark);
+  text-align: center;
+}
+
+.portal-footer p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.portal-footer .brand-signature {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+/* ── Modal (Share & Contact) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--navy-mid);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  max-width: 480px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.modal-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.share-input-wrap {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.share-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--cream);
+  font-size: 0.85rem;
+}
+
+.btn-copy {
+  background: var(--gold);
+  color: var(--navy-dark);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ── Mobile Floating Action Button (Hidden by default) ── */
+.mobile-fab-wrap {
+  display: none;
+}
+
+/* ==========================================================================
+   HANDHELD & MOBILE RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 960px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .sidebar-sticky {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Safe padding */
+  .container {
+    padding-left: max(16px, env(safe-area-inset-left, 16px));
+    padding-right: max(16px, env(safe-area-inset-right, 16px));
+  }
+
+  /* Top Navigation Bar */
+  .top-bar-inner {
+    height: 56px;
+  }
+  .brand-crest {
+    width: 24px;
+    height: 24px;
+  }
+  .brand-name {
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+  }
+  .brand-portal {
+    display: none;
+  }
+  .top-actions {
+    gap: 6px;
+  }
+  .badge-offline {
+    padding: 6px 8px;
+    border-radius: 999px;
+  }
+  .badge-offline-txt {
+    display: none;
+  }
+  .btn-icon {
+    padding: 7px 10px;
+  }
+  .btn-icon-label {
+    display: none;
+  }
+
+  /* Hero Section */
+  .itinerary-hero {
+    min-height: auto;
+    padding: 40px 0 24px;
+  }
+  .hero-content {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .client-exclusive-pill {
+    font-size: 0.64rem;
+    padding: 5px 12px;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.35;
+    margin-bottom: 12px;
+  }
+  .hero-title {
+    font-size: clamp(1.65rem, 6.5vw, 2.4rem);
+    line-height: 1.15;
+    word-break: break-word;
+    margin-bottom: 8px;
+  }
+  .hero-sub {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    word-break: break-word;
+    margin-bottom: 18px;
+  }
+
+  /* Countdown Strip */
+  .countdown-strip {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 16px;
+    gap: 10px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .countdown-label {
+    font-size: 0.7rem;
+    justify-content: center;
+  }
+  .countdown-units {
+    gap: 10px;
+    justify-content: center;
+  }
+  .countdown-number {
+    font-size: 1.4rem;
+  }
+  .countdown-divider {
+    font-size: 1.2rem;
+  }
+  .countdown-tag {
+    font-size: 0.6rem;
+  }
+
+  /* Highlights 2x2 Grid */
+  .voyage-highlights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .highlight-card {
+    padding: 10px 10px;
+    gap: 8px;
+    min-width: 0;
+  }
+  .highlight-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+  }
+  .highlight-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  .highlight-label {
+    font-size: 0.6rem;
+  }
+  .highlight-val {
+    font-size: 0.78rem;
+    word-break: break-word;
+  }
+
+  /* Sticky Navigation */
+  .portal-nav {
+    top: 58px;
+  }
+  .nav-tabs {
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  /* Day Filter Chips */
+  .day-chips {
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-chip {
+    min-width: 90px;
+    padding: 8px 10px;
+  }
+  .day-chip-num {
+    font-size: 0.65rem;
+  }
+  .day-chip-port {
+    font-size: 0.78rem;
+    max-width: 90px;
+  }
+
+  /* Day Cards & Timeline */
+  .day-card {
+    margin-bottom: 20px;
+  }
+  .day-header {
+    padding: 14px 16px;
+    gap: 8px;
+  }
+  .day-port-name {
+    font-size: 1.35rem;
+    word-break: break-word;
+  }
+  .day-stats {
+    gap: 6px;
+  }
+  .stat-chip {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  .day-body {
+    padding: 16px 14px;
+  }
+  .day-highlight-banner {
+    font-size: 0.82rem;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .timeline {
+    padding-left: 22px;
+    margin-bottom: 16px;
+  }
+  .timeline::before {
+    left: 7px;
+  }
+  .event-dot {
+    left: -22px;
+    width: 16px;
+    height: 16px;
+    top: 4px;
+  }
+  .event-dot svg {
+    width: 8px;
+    height: 8px;
+  }
+  .event-content {
+    padding: 10px 12px;
+  }
+  .event-time {
+    font-size: 0.7rem;
+  }
+  .event-category-badge {
+    font-size: 0.58rem;
+    padding: 1px 5px;
+  }
+  .event-title {
+    font-size: 0.88rem;
+  }
+  .event-desc {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .day-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 12px;
+  }
+  .dress-code-pill {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+  }
+  .advisor-tip {
+    font-size: 0.75rem;
+  }
+
+  /* Logistics (Flights, Hotel, Transfers) */
+  .logistics-section {
+    margin-top: 32px;
+    padding-top: 24px;
+  }
+  .section-title {
+    font-size: 1.65rem;
+  }
+  .flight-card {
+    padding: 16px 14px;
+  }
+  .airport-code {
+    font-size: 1.45rem;
+  }
+  .flight-time {
+    font-size: 0.78rem;
+  }
+  .flight-terminal {
+    font-size: 0.68rem;
+  }
+  .flight-meta-strip {
+    font-size: 0.74rem;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .hotel-card {
+    padding: 16px 14px;
+  }
+  .hotel-name {
+    font-size: 1.35rem;
+  }
+  .hotel-perks-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .doc-vault-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar details on mobile */
+  .advisor-card {
+    padding: 18px 16px;
+  }
+  .advisor-avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .advisor-info h3 {
+    font-size: 1.1rem;
+  }
+  .btn-advisor {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  .amenities-card {
+    padding: 18px 16px;
+  }
+
+  /* Floating Advisor Action (Mobile) */
+  .mobile-fab-wrap {
+    display: block;
+    position: fixed;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    right: 18px;
+    z-index: 95;
+  }
+  .mobile-fab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--gold);
+    color: var(--navy-dark);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 16px var(--gold-glow);
+    border: 1px solid var(--gold-light);
+  }
+}
+
+@media (max-width: 420px) {
+  .badge-offline-txt {
+    display: none;
+  }
+  .brand-name {
+    font-size: 0.88rem;
+  }
+  .hero-title {
+    font-size: 1.6rem;
+  }
+  .countdown-number {
+    font-size: 1.3rem;
+  }
+  .voyage-highlights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   PRINT STYLESHEET (@media print)
+   Generates a flawless, toner-friendly luxury PDF printout
+   ========================================================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+  }
+  .top-bar, .portal-nav, .top-actions, .advisor-actions, .day-chips, .btn-icon, .modal-overlay {
+    display: none !important;
+  }
+  .itinerary-hero {
+    background: none !important;
+    color: #000 !important;
+    padding: 20px 0 !important;
+    min-height: auto !important;
+    border-bottom: 2px solid #c8a96e !important;
+  }
+  .itinerary-hero::before { display: none !important; }
+  .hero-title { color: #060d1f !important; font-size: 2.2rem !important; }
+  .hero-title em { color: #8a7148 !important; }
+  .countdown-strip { display: none !important; }
+  .day-card, .highlight-card, .flight-card, .hotel-card, .advisor-card {
+    background: #ffffff !important;
+    border: 1px solid #dcdcdc !important;
+    color: #222222 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  .day-header {
+    background: #f8f6f0 !important;
+    border-bottom: 1px solid #e0c99a !important;
+  }
+  .day-port-name { color: #060d1f !important; }
+  .event-title { color: #111111 !important; }
+  .event-desc { color: #444444 !important; }
+  .main-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

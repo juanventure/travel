@@ -3,6 +3,8 @@
 # so the API keys are available at import time. override=False means real
 # environment variables (e.g. those injected by docker-compose) take priority.
 import os
-from dotenv import load_dotenv
-
-load_dotenv(os.path.join(os.path.dirname(__file__), os.pardir, ".env"), override=False)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), os.pardir, ".env"), override=False)
+except ImportError:
+    pass

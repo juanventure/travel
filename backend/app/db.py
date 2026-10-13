@@ -6,11 +6,12 @@ fail SOFT: if the DB is unreachable we log and return without raising, so a
 booking is never blocked by a database hiccup (the email is still attempted).
 """
 import os
+import secrets
 from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-from sqlalchemy import String, Integer, Text, Boolean, DateTime, select, text
+from sqlalchemy import String, Integer, Text, Boolean, DateTime, select, text, JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
@@ -102,6 +103,27 @@ class CallbackRequest(Base):
     notified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class ItineraryRecord(Base):
+    __tablename__ = "itineraries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    voyage_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    client_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    client_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    cruise_line: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    ship_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    sail_date: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    itinerary_data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
 
@@ -285,3 +307,105 @@ async def list_callback_requests(limit: int = 500) -> list["CallbackRequest"]:
     except Exception as exc:  # noqa: BLE001
         print(f"[db] failed to list callback requests: {exc!r}")
         return []
+
+
+async def save_itinerary(itinerary_data: dict,
+                         token: Optional[str] = None,
+                         client_email: Optional[str] = None) -> tuple[str, Optional[int]]:
+    """
+    Persist an itinerary JSON record. Generates a unique secure URL-safe token
+    if not provided. Returns (token, record_id).
+    """
+    token = token or secrets.token_urlsafe(12)
+    # Extract indexable metadata fields from the itinerary schema
+    client_obj = itinerary_data.get("client", {})
+    client_name = client_obj.get("leadGuest") if isinstance(client_obj, dict) else None
+    booking_obj = itinerary_data.get("booking", {})
+    cruise_line = booking_obj.get("cruiseLine") if isinstance(booking_obj, dict) else None
+    ship_name = booking_obj.get("ship") if isinstance(booking_obj, dict) else None
+    embarks = booking_obj.get("embarks", {}) if isinstance(booking_obj, dict) else {}
+    sail_date = embarks.get("date") if isinstance(embarks, dict) else None
+    voyage_id = itinerary_data.get("id")
+
+    try:
+        async with AsyncSessionLocal() as session:
+            # Check if record with token already exists (update)
+            result = await session.execute(
+                select(ItineraryRecord).where(ItineraryRecord.token == token)
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                existing.itinerary_data = itinerary_data
+                existing.client_name = client_name or existing.client_name
+                existing.cruise_line = cruise_line or existing.cruise_line
+                existing.ship_name = ship_name or existing.ship_name
+                existing.sail_date = sail_date or existing.sail_date
+                existing.voyage_id = voyage_id or existing.voyage_id
+                if client_email:
+                    existing.client_email = client_email
+                await session.commit()
+                print(f"[db] updated itinerary #{existing.id} (token={token})")
+                return token, existing.id
+            else:
+                record = ItineraryRecord(
+                    token=token,
+                    voyage_id=voyage_id,
+                    client_name=client_name,
+                    client_email=client_email,
+                    cruise_line=cruise_line,
+                    ship_name=ship_name,
+                    sail_date=sail_date,
+                    itinerary_data=itinerary_data,
+                )
+                session.add(record)
+                await session.commit()
+                await session.refresh(record)
+                print(f"[db] saved itinerary #{record.id} (token={token})")
+                return token, record.id
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to save itinerary: {exc!r}")
+        return token, None
+
+
+async def get_itinerary_by_token(token: str) -> Optional[dict]:
+    """Retrieve itinerary data dictionary by unique token."""
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(ItineraryRecord).where(ItineraryRecord.token == token)
+            )
+            record = result.scalar_one_or_none()
+            if record:
+                return record.itinerary_data
+            return None
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to get itinerary for token={token}: {exc!r}")
+        return None
+
+
+async def list_itineraries(limit: int = 100) -> list[dict]:
+    """Return recent itineraries for administrative overview."""
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(ItineraryRecord).order_by(ItineraryRecord.created_at.desc()).limit(limit)
+            )
+            records = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "token": r.token,
+                    "voyage_id": r.voyage_id,
+                    "client_name": r.client_name,
+                    "client_email": r.client_email,
+                    "cruise_line": r.cruise_line,
+                    "ship_name": r.ship_name,
+                    "sail_date": r.sail_date,
+                    "created_at": r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in records
+            ]
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] failed to list itineraries: {exc!r}")
+        return []
+

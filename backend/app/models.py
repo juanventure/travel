@@ -34,3 +34,29 @@ class CallbackRequest(BaseModel):
     session_id: Optional[str] = None
     # Cloudflare Turnstile token (required when bot protection is enabled).
     captcha_token: Optional[str] = None
+
+
+class ParseItineraryRequest(BaseModel):
+    raw_text: str
+    auto_save: bool = True
+    client_email: Optional[str] = None
+
+
+class ParseItineraryResponse(BaseModel):
+    success: bool
+    token: Optional[str] = None
+    share_url: Optional[str] = None
+    itinerary: dict
+    message: Optional[str] = None
+
+
+class SaveItineraryRequest(BaseModel):
+    itinerary: dict
+    token: Optional[str] = None
+
+
+class SaveItineraryResponse(BaseModel):
+    success: bool
+    token: str
+    share_url: str
+    message: str
