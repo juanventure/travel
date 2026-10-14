@@ -32,6 +32,8 @@ services:
       # CHANGE THESE before exposing the backend publicly.
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      # Advisor Portal passkey (server-side). Unset = falls back to ADMIN_PASSWORD.
+      - ADVISOR_PASSKEY=${ADVISOR_PASSKEY:-}
       - API_KEY=dev-secret-key-12345
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       # Live cruise search (Tavily). Set in your .env.

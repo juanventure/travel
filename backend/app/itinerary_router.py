@@ -7,7 +7,10 @@ and retrieving itineraries by unique secure token.
 import os
 import secrets
 from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Optional
+
+from app.ratelimit import rate_limiter
 
 from app.models import (
     ParseItineraryRequest, ParseItineraryResponse,
@@ -16,40 +19,55 @@ from app.models import (
 from app.itinerary_parser import parse_confirmation_text
 from app.db import save_itinerary, get_itinerary_by_token, list_itineraries
 
-router = APIRouter(prefix="/api/itinerary", tags=["itinerary"])
+router = APIRouter(prefix="/api/itinerary", tags=["itinerary"],
+                   dependencies=[Depends(rate_limiter(60, "itinerary"))])
 
 # Base URL used for constructing share links
 ITINERARY_BASE_URL = os.getenv("ITINERARY_BASE_URL", "https://horizonvoyages.net/itinerary/?token=")
 
+def _configured_secrets() -> list:
+    """Advisor secrets come ONLY from the environment — never from source code.
+
+    ADVISOR_PASSKEY is the dedicated portal passkey; ADMIN_PASSWORD (also the
+    HTTP Basic password for /admin) is accepted too. The public API_KEY is NOT
+    accepted: it ships in config.js, so every site visitor has it.
+    """
+    return [s for s in (os.getenv("ADVISOR_PASSKEY"), os.getenv("ADMIN_PASSWORD")) if s]
+
+
+_basic = HTTPBasic(auto_error=False)
+
+
 def verify_admin_auth(x_admin_password: Optional[str] = Header(None),
-                      x_api_key: Optional[str] = Header(None)):
-    """Authenticate advisor requests to prevent unauthorized parsing or data inspection."""
-    token = x_admin_password or x_api_key
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing advisor passkey.")
+                      basic: Optional[HTTPBasicCredentials] = Depends(_basic)):
+    """Authenticate advisor requests (portal passkey header, or /admin Basic auth)."""
+    secrets_list = _configured_secrets()
+    if not secrets_list:  # fail CLOSED: never fall back to a default or open access
+        raise HTTPException(status_code=503, detail="Advisor access is not configured.")
 
-    # 1. Accept the chosen advisor passkey
-    if secrets.compare_digest(token, "K@4L4nn202"):
+    if x_admin_password and any(
+            secrets.compare_digest(x_admin_password.encode(), s.encode())
+            for s in secrets_list):
         return True
 
-    # 2. Also accept any configured ADMIN_PASSWORD from environment
-    env_admin = os.getenv("ADMIN_PASSWORD")
-    if env_admin and secrets.compare_digest(token, env_admin):
-        return True
+    # Same-origin fetches from the Basic-auth protected /admin page carry the
+    # browser's cached Basic credentials.
+    admin_user = os.getenv("ADMIN_USER")
+    admin_pass = os.getenv("ADMIN_PASSWORD")
+    if basic and admin_user and admin_pass:
+        user_ok = secrets.compare_digest(basic.username.encode(), admin_user.encode())
+        pass_ok = secrets.compare_digest(basic.password.encode(), admin_pass.encode())
+        if user_ok and pass_ok:
+            return True
 
-    # 3. Also accept the configured API_KEY from environment
-    env_key = os.getenv("API_KEY")
-    if env_key and secrets.compare_digest(token, env_key):
-        return True
-
-    raise HTTPException(status_code=401, detail="Invalid advisor passkey.")
+    # Plain 401, deliberately without a WWW-Authenticate header: that would make
+    # browsers pop a Basic-auth dialog when the portal's fetch fails.
+    raise HTTPException(status_code=401, detail="Invalid or missing advisor credentials.")
 
 
-@router.post("/auth/verify")
-async def verify_passkey(x_admin_password: Optional[str] = Header(None),
-                         x_api_key: Optional[str] = Header(None)):
-    """Verify advisor passkey."""
-    verify_admin_auth(x_admin_password, x_api_key)
+@router.post("/auth/verify", dependencies=[Depends(rate_limiter(10, "advisor-auth"))])
+async def verify_passkey(_: bool = Depends(verify_admin_auth)):
+    """Verify advisor passkey (server-side; the portal calls this to unlock)."""
     return {"success": True, "message": "Advisor passkey verified."}
 
 
@@ -84,7 +102,7 @@ async def parse_cruise_confirmation(req: ParseItineraryRequest):
     )
 
 
-@router.post("", response_model=SaveItineraryResponse)
+@router.post("", response_model=SaveItineraryResponse, dependencies=[Depends(verify_admin_auth)])
 async def save_or_update_itinerary(req: SaveItineraryRequest):
     """
     Persist or update an itinerary JSON record in PostgreSQL.

@@ -48,6 +48,11 @@ def require_admin(credentials: HTTPBasicCredentials = Depends(_basic)) -> str:
     return credentials.username
 
 
+class _Raw(str):
+    """Marks trusted, server-built HTML so _fmt doesn't escape it. User/AI-derived
+    text must never be wrapped in this."""
+
+
 def _fmt(value) -> str:
     if value is None or value == "":
         return "—"
@@ -55,8 +60,8 @@ def _fmt(value) -> str:
         return value.strftime("%Y-%m-%d %H:%M UTC")
     if isinstance(value, bool):
         return "yes" if value else "no"
-    if isinstance(value, str) and value.startswith("<a "):
-        return value
+    if isinstance(value, _Raw):
+        return str(value)
     return html.escape(str(value))
 
 
@@ -115,7 +120,7 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
           it.get("client_name") or "—",
           f"{it.get('cruise_line') or ''} ({it.get('ship_name') or ''})".strip() or "—",
           it.get("sail_date") or "—",
-          f'<a href="/itinerary/?token={it.get("token")}" target="_blank" style="color:#c8a96e; font-weight:600;">Open Itinerary ({it.get("token")[:8]}…) ↗</a>',
+          _Raw(f'<a href="/itinerary/?token={html.escape(str(it.get("token")), quote=True)}" target="_blank" rel="noopener noreferrer" style="color:#c8a96e; font-weight:600;">Open Itinerary ({html.escape(str(it.get("token"))[:8])}…) ↗</a>'),
           it.get("created_at")]
          for it in itins],
     )
@@ -145,18 +150,43 @@ async def admin_dashboard(request: Request, _: str = Depends(require_admin)):
       try {
         const res = await fetch('/api/itinerary/parse', {
           method: 'POST',
+          credentials: 'same-origin',  // sends this page's cached Basic-auth credentials
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ raw_text: text, client_email: email, auto_save: true })
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          const portalUrl = '/itinerary/?token=' + data.token;
+          const portalUrl = '/itinerary/?token=' + encodeURIComponent(data.token);
           const shareUrl = data.share_url || (window.location.origin + portalUrl);
+          const guest = (data.itinerary && data.itinerary.client && data.itinerary.client.leadGuest) || 'Guest';
+          const ship = (data.itinerary && data.itinerary.booking && data.itinerary.booking.ship) || 'Ship';
+          // DOM nodes + textContent only: AI-parsed text must never become markup.
           resDiv.style.display = 'block';
-          resDiv.innerHTML = '<strong>Success!</strong> Itinerary generated for <em>' + (data.itinerary?.client?.leadGuest || 'Guest') + '</em> (' + (data.itinerary?.booking?.ship || 'Ship') + ')<br />' +
-            'Client Portal URL: <a href="' + portalUrl + '" target="_blank" style="color:#c8a96e; font-weight:bold;">' + shareUrl + '</a><br />' +
-            '<button onclick="navigator.clipboard.writeText(\\'' + shareUrl + '\\'); alert(\\'Copied to clipboard!\\');" style="margin-top:8px; padding:6px 12px; border-radius:4px; border:none; background:#c8a96e; color:#060d1f; font-weight:600; cursor:pointer;">Copy Client Link</button>' +
-            ' <button onclick="window.location.reload();" style="margin-left:10px; padding:6px 12px; border-radius:4px; border:1px solid #2a3a52; background:#162438; color:#fff; cursor:pointer;">Refresh Table</button>';
+          resDiv.textContent = '';
+          const strong = document.createElement('strong');
+          strong.textContent = 'Success! ';
+          resDiv.appendChild(strong);
+          resDiv.appendChild(document.createTextNode('Itinerary generated for ' + guest + ' (' + ship + ')'));
+          resDiv.appendChild(document.createElement('br'));
+          resDiv.appendChild(document.createTextNode('Client Portal URL: '));
+          const link = document.createElement('a');
+          link.href = portalUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.style.cssText = 'color:#c8a96e; font-weight:bold;';
+          link.textContent = shareUrl;
+          resDiv.appendChild(link);
+          resDiv.appendChild(document.createElement('br'));
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy Client Link';
+          copyBtn.style.cssText = 'margin-top:8px; padding:6px 12px; border-radius:4px; border:none; background:#c8a96e; color:#060d1f; font-weight:600; cursor:pointer;';
+          copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(shareUrl); alert('Copied to clipboard!'); });
+          resDiv.appendChild(copyBtn);
+          const refreshBtn = document.createElement('button');
+          refreshBtn.textContent = 'Refresh Table';
+          refreshBtn.style.cssText = 'margin-left:10px; padding:6px 12px; border-radius:4px; border:1px solid #2a3a52; background:#162438; color:#fff; cursor:pointer;';
+          refreshBtn.addEventListener('click', () => window.location.reload());
+          resDiv.appendChild(refreshBtn);
         } else {
           alert('Error: ' + (data.detail || 'Failed to parse confirmation.'));
         }

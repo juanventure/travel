@@ -38,6 +38,9 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      # Advisor Portal passkey (verified server-side; never put it in HTML/JS):
+      - key: ADVISOR_PASSKEY
+        sync: false
       # Email (Gmail SMTP):
       - key: SMTP_HOST
         value: smtp.gmail.com

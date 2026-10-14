@@ -649,8 +649,8 @@
   <!-- Runtime Config -->
   <script src="../config.js"></script>
   <script>
-    // SHA-256 hash for passkey verification: 'K@4L4nn202'
-    const ADVISOR_PASS_HASH = "efba5b38b773a71ff6c5964fbaad6189889ad98234726a8dc3a07353ee6ff09c";
+    // The advisor passkey is verified SERVER-SIDE (POST /api/itinerary/auth/verify).
+    // Nothing secret (no passkey, no hash) lives in this public file.
 
     // Resolve Backend API Base
     const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE)
@@ -704,12 +704,6 @@ Included Amenities:
     });
 
     // ── Authentication & Security Gate ──
-    async function hashString(str) {
-      const buffer = new TextEncoder().encode(str);
-      const digest = await crypto.subtle.digest('SHA-256', buffer);
-      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
     function initAuthGate() {
       const savedPass = sessionStorage.getItem('hv_advisor_pass');
       if (savedPass) {
@@ -726,8 +720,20 @@ Included Amenities:
         const errEl = document.getElementById('authError');
         errEl.style.display = 'none';
 
-        const hash = await hashString(input);
-        if (hash === ADVISOR_PASS_HASH) {
+        let ok = false;
+        try {
+          const res = await fetch(`${API_BASE}/api/itinerary/auth/verify`, {
+            method: 'POST',
+            headers: { 'X-Admin-Password': input }
+          });
+          ok = res.ok;
+          if (res.status === 429) errEl.textContent = 'Too many attempts. Wait a minute and try again.';
+          else if (res.status === 503) errEl.textContent = 'Advisor access is not configured on the server.';
+          else if (!res.ok) errEl.textContent = 'Incorrect passkey.';
+        } catch (err) {
+          errEl.textContent = 'Could not reach the server.';
+        }
+        if (ok) {
           sessionStorage.setItem('hv_advisor_pass', input);
           unlockWorkbench(true);
         } else {
@@ -766,16 +772,12 @@ Included Amenities:
     }
 
     function getAuthHeaders() {
-      const pass = sessionStorage.getItem('hv_advisor_pass') || 'K@4L4nn202';
-      const apiKey = (window.APP_CONFIG && window.APP_CONFIG.API_KEY) ? window.APP_CONFIG.API_KEY : '';
-      const headers = {
+      // No default: without a passkey in this session the server rejects the call.
+      const pass = sessionStorage.getItem('hv_advisor_pass') || '';
+      return {
         'Content-Type': 'application/json',
         'X-Admin-Password': pass
       };
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
-      return headers;
     }
 
     async function checkBackendHealth() {
@@ -825,6 +827,7 @@ Included Amenities:
         if (res.status === 401) {
           const errData = await res.json().catch(() => ({}));
           alert('Authentication error: ' + (errData.detail || 'Invalid passkey.'));
+          lockPortal();
           return;
         }
 
@@ -913,6 +916,7 @@ Included Amenities:
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">No custom itineraries generated yet. Paste a confirmation above to create the first one!</td></tr>';
           }
         } else if (res.status === 401) {
+          lockPortal();
           tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:24px;">Authentication required to view saved voyages.</td></tr>';
         } else {
           tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">Could not retrieve list from server. (Backend database may be offline).</td></tr>';
