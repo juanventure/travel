@@ -231,14 +231,20 @@ booking_leads   (advisor flow)         sailings (self-serve flow)
 4. ~~Deposit vs. full payment for self-serve; refund/cancellation policy.~~
    **Moot 2026-09-08** — we take no payment. Deposit terms, refunds and
    cancellation are the cruise line's, governed by their contract of carriage.
-5. **Partly answered 2026-09-16 (see 3a).** Fora: (a) PBLs allowed if tied to
-   Fora's IATA#; (b) disclosure — say you're affiliated with Fora *somewhere on
-   the site* (done: footer + legal pages); their registration covers your SOT via
-   a form after joining; (c) AI assistant allowed if it never shares Fora fares
-   or commissions. **Still open — ask in writing:** literal disclosure wording;
-   whether Fora wants to review the AI assistant / any required AI disclosure;
-   whether PBL bookings count toward commission tiers and the CLIA card
-   threshold; any restrictions on advertising fares or promotions on our own site.
+5. **Answered by Fora in writing (Merritt, Membership, 2026-09-16 and
+   2026-10-13):**
+   - (a) PBLs allowed if tied to Fora's IATA#; bookings through any partner-
+     affiliated link **count toward commission and booking thresholds**.
+   - (b) Disclosure: say you're **"Affiliated with Fora"** or **"a Fora agency"**
+     somewhere in your marketing (our site's "proudly affiliated with Fora" /
+     footer already match — but only publish once you've actually joined). Their
+     registration covers your SOT via a form after joining.
+   - (c) AI assistant allowed if it never shares Fora fares or commissions; Fora
+     **does not need to review it beforehand**.
+   - (d) Marketing is "very flexible"; brand guidelines are in the Portal after
+     joining — check them then (esp. the "exclusive rates/amenities" copy).
+   - **Still unconfirmed:** the CLIA card threshold specifically, and any
+     fare/promotion advertising restrictions (covered only by the brand guidelines).
 6. ~~Hosting target (simple PaaS vs. full AWS per README).~~ **Decided
    2026-06-16:** Cloudflare Pages + Render + Neon + Upstash (see Phase 5 / `docs/deploy.md`).
 

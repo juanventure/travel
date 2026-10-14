@@ -1,9 +1,14 @@
 # Host agency switch: Outside Agents → Fora
 
-Status: **website switched to Fora on 2026-10-13** (§1 done: `index.html`,
-`terms.html`, `privacy.html`, with the legal pages' "Last updated" dates bumped).
-**Still open:** §2 registration numbers (none displayed — don't add one until
-Fora confirms it in writing), §3 host-dependent "exclusive" claims, and §4
+Status: **website text switched to Fora on 2026-10-13, ahead of joining** (§1:
+`index.html`, `terms.html`, `privacy.html`, legal "Last updated" dates bumped).
+**Caveat:** as of 2026-10-14 the Fora account is not yet active, so the site
+names a host you aren't with yet — either join promptly or revert (`git revert
+aa176e4`) until you do. Fora requires the site to say **"Affiliated with Fora"**
+or **"a Fora agency"** somewhere (current copy already satisfies this).
+**Still open:** §2 registration numbers (none displayed — Fora's SOT covers you
+via a form after joining; don't add a number until Fora supplies it), §3
+host-dependent "exclusive" claims (check the Portal brand guidelines), and §4
 off-site properties (cruise line portals, Calendly, Travefy, social bios, etc.).
 Below, the "Current" columns show the pre-switch Outside Agents wording.
 
